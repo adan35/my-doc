@@ -26,7 +26,10 @@ const cspPlugin = (): Plugin => ({
   name: 'mydoc-csp',
   apply: 'build',
   transformIndexHtml: (html) =>
-    html.replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`),
+    html.replace(
+      '<meta charset="UTF-8" />',
+      `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`,
+    ),
 });
 
 export default defineConfig({

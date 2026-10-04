@@ -32,12 +32,12 @@ export function useGlobalShortcuts() {
         e.stopPropagation();
         fn();
       };
-      // Mod+N works in installed/desktop contexts where the browser doesn't reserve it.
       if (m(SHORTCUTS.palette))
         return run(() => ui.setOverlay(ui.overlay === 'palette' ? null : 'palette'));
       if (m(SHORTCUTS.quickOpen))
         return run(() => ui.setOverlay(ui.overlay === 'quickopen' ? null : 'quickopen'));
       if (m(SHORTCUTS.search)) return run(() => navigate({ name: 'search', q: '' }));
+      // Mod+N also works where the browser doesn't reserve it.
       if (m(SHORTCUTS.newDoc) || m('Mod+N')) return run(() => void A.newDocument());
       if (m(SHORTCUTS.newFolder)) return run(() => void A.newFolder());
       if (m(SHORTCUTS.toggleSidebar))

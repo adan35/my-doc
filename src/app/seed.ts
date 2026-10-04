@@ -6,7 +6,7 @@ My Doc is one place for every document. Your files stay plain Markdown and text,
 
 ## Start here
 
-- **Create** a document with **Ctrl/Cmd + N**, or use **New** in the sidebar.
+- **Create** a document with **Alt + N**, or use **New document** in the sidebar.
 - **Import** an existing folder: drag it onto the sidebar, or use *Import* from the command palette (**Ctrl/Cmd + K**).
 - **Find anything** with **Ctrl/Cmd + P** (open a document) or **Ctrl/Cmd + Shift + F** (search everything).
 - **Organize** with folders, favorites and #tags.
@@ -89,7 +89,7 @@ const SHORTCUTS = `# Keyboard shortcuts
 | Command palette | Ctrl/Cmd + K |
 | Quick open | Ctrl/Cmd + P |
 | Search everything | Ctrl/Cmd + Shift + F |
-| New document | Alt + N (Ctrl/Cmd + N in the installed app) |
+| New document | Alt + N (or Ctrl/Cmd + N where the browser allows it) |
 | Save now | Ctrl/Cmd + S |
 | Find in document | Ctrl/Cmd + F |
 | Bold / Italic | Ctrl/Cmd + B / I |

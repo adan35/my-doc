@@ -20,11 +20,17 @@ import { TREE_DRAG_TYPE } from './FileTree';
 import { useGlobalShortcuts } from './shortcuts';
 
 // The editor and Markdown renderer are the heaviest code; load them with the first document.
-const DocumentView = lazy(() => import('../document/DocumentView').then((m) => ({ default: m.DocumentView })));
+const DocumentView = lazy(() =>
+  import('../document/DocumentView').then((m) => ({ default: m.DocumentView })),
+);
 
 function DocumentFallback() {
   return (
-    <div className="mx-auto w-full max-w-[760px] space-y-3 px-6 py-16" aria-busy="true" aria-label="Loading document">
+    <div
+      className="mx-auto w-full max-w-[760px] space-y-3 px-6 py-16"
+      aria-busy="true"
+      aria-label="Loading document"
+    >
       <div className="skeleton h-8 w-2/3" />
       <div className="skeleton h-4 w-full" />
       <div className="skeleton h-4 w-5/6" />

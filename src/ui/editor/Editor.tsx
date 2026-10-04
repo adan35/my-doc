@@ -71,7 +71,6 @@ interface Props {
 const stateCache = new Map<string, { state: EditorState; rev: number }>();
 const scrollCache = new Map<string, number>();
 
-
 function wikiAndTagCompletion(docId: EntryId) {
   return (ctx: CompletionContext): CompletionResult | null => {
     const wiki = ctx.matchBefore(/\[\[[^\]\n]*/);
