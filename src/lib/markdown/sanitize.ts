@@ -34,7 +34,7 @@ export function sanitizeHtml(html: string): string {
   configure();
   return DOMPurify.sanitize(html, {
     USE_PROFILES: { html: true, svg: true, mathMl: true },
-    ADD_ATTR: ['data-line', 'data-heading', 'aria-hidden', 'target'],
+    ADD_ATTR: ['data-line', 'data-heading', 'data-wiki', 'data-fragment', 'aria-hidden', 'target'],
     FORBID_TAGS: [
       'style',
       'form',

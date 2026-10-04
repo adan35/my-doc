@@ -67,3 +67,23 @@ describe('renderMarkdown', () => {
     });
   });
 });
+
+describe('wiki links', () => {
+  it('renders [[Target]], sections and labels as resolvable links', () => {
+    const { html } = renderMarkdown(
+      'See [[Keyboard shortcuts]], [[Guide#Install|setup]] and `[[code]]`.',
+    );
+    expect(html).toContain('data-wiki="Keyboard shortcuts"');
+    expect(html).toContain('href="Keyboard%20shortcuts.md"');
+    expect(html).toContain('data-fragment="Install"');
+    expect(html).toContain('>setup</a>');
+    expect(html).toContain('<code>[[code]]</code>');
+  });
+
+  it('cannot smuggle markup through a wiki link', () => {
+    const { html } = renderMarkdown('[[<img src=x onerror=alert(1)>|"><script>x</script>]]');
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    expect(doc.querySelectorAll('script, img, [onerror]')).toHaveLength(0);
+    expect(doc.querySelector('a.wiki-link')?.textContent).toBe('"><script>x</script>');
+  });
+});

@@ -79,6 +79,33 @@ function createRenderer(): MarkdownIt {
     }
   });
 
+  // [[Target]], [[Target#Section]] and [[Target|Label]] become links the preview resolves by name.
+  md.inline.ruler.before('link', 'wikilink', (state, silent) => {
+    const src = state.src;
+    const start = state.pos;
+    if (src.charCodeAt(start) !== 0x5b || src.charCodeAt(start + 1) !== 0x5b) return false;
+    const m = /^\[\[([^\]|#\n]+)(#[^\]|\n]*)?(?:\|([^\]\n]*))?\]\]/.exec(src.slice(start));
+    if (!m) return false;
+    const target = m[1]!.trim();
+    if (!target) return false;
+    if (!silent) {
+      const fragment = m[2]?.slice(1).trim();
+      const label = m[3]?.trim() || (fragment ? `${target} › ${fragment}` : target);
+      const file = /\.[a-z0-9]+$/i.test(target) ? target : `${target}.md`;
+      const open = state.push('link_open', 'a', 1);
+      open.attrs = [
+        ['href', encodeURI(file) + (fragment ? `#${encodeURIComponent(fragment)}` : '')],
+        ['class', 'wiki-link'],
+        ['data-wiki', target],
+      ];
+      if (fragment) open.attrPush(['data-fragment', fragment]);
+      state.push('text', '', 0).content = label;
+      state.push('link_close', 'a', -1);
+    }
+    state.pos += m[0].length;
+    return true;
+  });
+
   md.renderer.rules.fence = (tokens, idx) => {
     const token = tokens[idx]!;
     const lang = String(token.info).trim().split(/\s+/)[0]?.toLowerCase() ?? '';

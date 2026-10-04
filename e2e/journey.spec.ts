@@ -181,3 +181,12 @@ test('task checkboxes toggle from the preview', async ({ page }) => {
   await expect(page.locator('.prose .task-list-item-checkbox').nth(1)).toBeChecked();
   await waitSaved(page);
 });
+
+test('wiki links in the preview open the linked document', async ({ page }) => {
+  await freshApp(page);
+  await page.locator('.prose a.wiki-link', { hasText: 'Keyboard shortcuts' }).click();
+  await expect(
+    page.getByRole('tab', { name: /^Keyboard shortcuts\.md/, selected: true }),
+  ).toBeVisible();
+  await expect(page.locator('.cm-content')).toContainText('# Keyboard shortcuts');
+});

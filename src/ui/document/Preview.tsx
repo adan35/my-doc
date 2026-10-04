@@ -14,6 +14,8 @@ import { renderMarkdown } from '@/lib/markdown/render';
 import { renderMermaidIn } from '@/lib/markdown/mermaid';
 import { session, ws } from '@/app/app-store';
 import { openEntry } from '@/app/actions';
+import { slugify } from '@/domain/outline';
+import { resolveWikiLink } from '@/app/workspace';
 import { toast } from '@/app/toast-store';
 import { useResolvedTheme, useTree } from '../hooks';
 
@@ -119,7 +121,7 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
       const href = a.getAttribute('href') ?? '';
       if (isExternalHref(href) || href.startsWith('#') || a.classList.contains('heading-anchor'))
         continue;
-      const target = resolveHref(docId, href);
+      const target = a.dataset.wiki ? resolveWiki(a.dataset.wiki) : resolveHref(docId, href);
       if (!target) {
         a.classList.add('link-broken');
         a.title = 'This document could not be found';
@@ -192,6 +194,14 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
         ?.scrollIntoView({ block: 'start', behavior: 'smooth' });
       return;
     }
+    if (a.dataset.wiki !== undefined) {
+      e.preventDefault();
+      const id = resolveWiki(a.dataset.wiki);
+      if (id) void openEntry(id, a.dataset.fragment && slugify(a.dataset.fragment));
+      else
+        toast({ message: `"${a.dataset.wiki}" doesn't exist in this workspace.`, tone: 'error' });
+      return;
+    }
     if (isExternalHref(href)) return; // target=_blank + rel=noopener from the sanitizer
     e.preventDefault();
     const [, fragment] = href.split('#');
@@ -243,6 +253,10 @@ function resolveHref(docId: EntryId, href: string): EntryId | undefined {
   const [path = ''] = href.split('#');
   const tree = ws().tree;
   return session().knowledge.resolve(tree, docId, { kind: 'markdown', target: safeDecode(path) });
+}
+
+function resolveWiki(target: string): EntryId | undefined {
+  return resolveWikiLink(ws().tree, target)?.id;
 }
 
 function nearestLineElement(root: HTMLElement | null, line: number): HTMLElement | null {
