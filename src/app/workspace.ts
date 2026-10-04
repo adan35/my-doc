@@ -197,6 +197,52 @@ export class Workspace {
     });
   }
 
+  /**
+   * Creates many files in one atomic commit and one tree event (used by import).
+   * Names are made unique against existing siblings and each other.
+   */
+  createFiles(
+    specs: { parentId: EntryId | null; name: string; content: FileContent }[],
+  ): Promise<Entry[]> {
+    return this.serial(async () => {
+      const taken = new Map<EntryId | null, string[]>();
+      const now = Date.now();
+      const created: Entry[] = [];
+      const texts = new Map<EntryId, string>();
+      for (const { parentId, name, content } of specs) {
+        this.assertFolder(parentId);
+        let siblings = taken.get(parentId);
+        if (!siblings) taken.set(parentId, (siblings = this.siblingNames(parentId)));
+        const clean = uniqueName(this.assertName(name), siblings);
+        siblings.push(clean);
+        const text = typeof content === 'string' ? content : null;
+        const entry: Entry = {
+          id: createId(),
+          kind: 'file',
+          parentId,
+          name: clean,
+          createdAt: now,
+          updatedAt: now,
+          size: text !== null ? textBytes(text) : (content as Blob).size,
+          encoding: text !== null ? 'text' : 'binary',
+          mime: text !== null ? mimeOf(clean) : (content as Blob).type || mimeOf(clean),
+        };
+        created.push(entry);
+        if (text !== null) texts.set(entry.id, text);
+      }
+      if (!created.length) return created;
+      await this.apply(
+        {
+          putEntries: created,
+          putContents: created.map((e, i) => ({ id: e.id, data: specs[i]!.content })),
+        },
+        texts,
+      );
+      this.emit({ type: 'tree' });
+      return created;
+    });
+  }
+
   createFolder(parentId: EntryId | null, name: string, opts: { uniquify?: boolean } = {}) {
     return this.serial(async () => {
       this.assertFolder(parentId);
@@ -605,6 +651,27 @@ export class Workspace {
   }
 }
 
+/** Live files keyed by lower-case name and (for text files) extension-less name, per tree snapshot. */
+const wikiIndexes = new WeakMap<Tree, Map<string, Entry[]>>();
+
+function wikiIndex(tree: Tree): Map<string, Entry[]> {
+  let index = wikiIndexes.get(tree);
+  if (index) return index;
+  index = new Map();
+  const add = (key: string, e: Entry) => {
+    const list = index!.get(key);
+    if (!list) index!.set(key, [e]);
+    else if (list[list.length - 1] !== e) list.push(e);
+  };
+  for (const e of tree.liveFiles()) {
+    const name = e.name.toLowerCase();
+    add(name, e);
+    if (isTextType(fileTypeOf(e.name))) add(baseName(name), e);
+  }
+  wikiIndexes.set(tree, index);
+  return index;
+}
+
 /** Resolves `[[Name]]` / `[[Folder/Name]]` to a live document. */
 export function resolveWikiLink(tree: Tree, target: string): Entry | undefined {
   const t = target.trim().toLowerCase();
@@ -612,12 +679,9 @@ export function resolveWikiLink(tree: Tree, target: string): Entry | undefined {
     return tree.findByPath(t) ?? tree.findByPath(`${t}.md`);
   }
   let best: Entry | undefined;
-  for (const e of tree.liveFiles()) {
-    const name = e.name.toLowerCase();
-    if (name === t || (isTextType(fileTypeOf(e.name)) && baseName(name) === t)) {
-      // Prefer Markdown files on a tie.
-      if (!best || (isMarkdownName(e.name) && !isMarkdownName(best.name))) best = e;
-    }
+  for (const e of wikiIndex(tree).get(t) ?? []) {
+    // Prefer Markdown files on a tie.
+    if (!best || (isMarkdownName(e.name) && !isMarkdownName(best.name))) best = e;
   }
   return best;
 }

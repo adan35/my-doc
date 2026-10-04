@@ -1,5 +1,5 @@
 import { unzipSync } from 'fflate';
-import type { EntryId } from '@/domain/types';
+import type { EntryId, FileContent } from '@/domain/types';
 import { fileTypeOf, isTextType, sanitizeName, extensionOf } from '@/domain/names';
 import { normalizePath } from '@/domain/paths';
 import type { ConflictChoice } from './dialog-store';
@@ -157,17 +157,36 @@ export async function importItems(
     return parent;
   };
 
-  let applyAll: ConflictChoice | null = null;
+  // New files are created in batches: one commit and one tree event per batch keeps
+  // large imports linear instead of rebuilding indexes after every file.
+  const BATCH = 250;
   let done = 0;
+  let pending: { parentId: EntryId | null; name: string; content: FileContent }[] = [];
+  const pendingNames = new Set<string>();
+  const flush = async () => {
+    if (!pending.length) return;
+    const created = await ws.createFiles(pending);
+    result.files += created.length;
+    result.firstFileId ??= created[0]?.id;
+    done += created.length;
+    pending = [];
+    pendingNames.clear();
+    onProgress?.(done, items.length);
+  };
+
+  let applyAll: ConflictChoice | null = null;
   for (const { segments, file } of items) {
     const name = segments[segments.length - 1]!;
     const parentId = await folderFor(segments.slice(0, -1));
     const text = await readAsTextIfText(file, name);
     const content = text ?? (file.type ? file : new Blob([file], { type: '' }));
+    // A clash with a file queued in this batch is resolved like any other clash.
+    if (pendingNames.has(`${parentId}/${name.toLowerCase()}`)) await flush();
     const clash = ws.tree
       .childrenOf(parentId)
       .find((e) => e.name.toLowerCase() === name.toLowerCase());
     if (clash) {
+      await flush();
       let choice: ConflictChoice | null = applyAll;
       if (!choice) {
         choice = await resolveConflict(name, items.length - done);
@@ -191,12 +210,11 @@ export async function importItems(
         continue;
       }
     }
-    const entry = await ws.createFile(parentId, name, content, { uniquify: true });
-    result.files++;
-    result.firstFileId ??= entry.id;
-    done++;
-    onProgress?.(done, items.length);
+    pending.push({ parentId, name, content });
+    pendingNames.add(`${parentId}/${name.toLowerCase()}`);
+    if (pending.length >= BATCH) await flush();
   }
+  await flush();
   return result;
 }
 

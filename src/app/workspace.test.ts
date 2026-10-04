@@ -222,6 +222,27 @@ describe('import / export', () => {
     expect(ws.tree.findByPath('project/README (2).md')).toBeTruthy();
   });
 
+  it('asks about duplicates inside one import and batches new files', async () => {
+    const { ws } = await openWs();
+    const asked: string[] = [];
+    let treeEvents = 0;
+    ws.subscribe((e) => void (e.type === 'tree' && treeEvents++));
+    const items = [
+      ...Array.from({ length: 300 }, (_, i) => ({ path: `n/${i}.md`, file: new Blob([`${i}`]) })),
+      { path: 'n/0.md', file: new Blob(['dup']) },
+    ];
+    const r = await importItems(ws, null, items, async (name) => {
+      asked.push(name);
+      return { action: 'keep-both', applyToAll: false };
+    });
+    expect(asked).toEqual(['0.md']);
+    expect(r.files).toBe(301);
+    expect(ws.tree.findByPath('n/0 (2).md')).toBeTruthy();
+    expect(await ws.readText(ws.tree.findByPath('n/299.md')!.id)).toBe('299');
+    // One folder plus a handful of batches, not one event per file.
+    expect(treeEvents).toBeLessThan(10);
+  });
+
   it('imports zip archives without zip-slip', async () => {
     const { ws } = await openWs();
     const zip = zipSync({ 'a/b.md': strToU8('# B'), '../escape.md': strToU8('x') });
