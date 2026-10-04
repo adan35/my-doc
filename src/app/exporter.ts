@@ -1,7 +1,6 @@
 import { zipSync } from 'fflate';
 import type { Entry, EntryId } from '@/domain/types';
 import { baseName, isMarkdownName } from '@/domain/names';
-import { renderMarkdown } from '@/lib/markdown/render';
 import type { Workspace } from './workspace';
 
 export function downloadBlob(blob: Blob, filename: string) {
@@ -66,7 +65,9 @@ img{max-width:100%}.heading-anchor{display:none}.code-lang{display:none}hr{borde
 `;
 
 /** Standalone HTML (sanitized, no scripts) that opens anywhere. */
-export function documentHtml(title: string, markdown: string): string {
+export async function documentHtml(title: string, markdown: string): Promise<string> {
+  // Loaded on demand: the renderer is large and only needed for exports and the preview.
+  const { renderMarkdown } = await import('@/lib/markdown/render');
   // Headings carry data-heading in the app; real ids make anchors work in the exported file.
   const html = renderMarkdown(markdown).html.replace(/ data-heading="/g, ' id="');
   const safeTitle = title.replace(
@@ -86,7 +87,7 @@ export async function exportHtml(ws: Workspace, id: EntryId) {
   if (!e) return;
   const text = await ws.readText(id);
   const html = isMarkdownName(e.name)
-    ? documentHtml(baseName(e.name), text)
-    : documentHtml(e.name, '~~~~~~~~\n' + text + '\n~~~~~~~~');
+    ? await documentHtml(baseName(e.name), text)
+    : await documentHtml(e.name, '~~~~~~~~\n' + text + '\n~~~~~~~~');
   downloadBlob(new Blob([html], { type: 'text/html' }), `${baseName(e.name)}.html`);
 }

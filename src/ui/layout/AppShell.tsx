@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { PanelLeft, Upload } from 'lucide-react';
 import { useRouter, navigate } from '@/app/router';
 import { useUi } from '@/app/ui-store';
@@ -10,7 +10,6 @@ import { Sidebar } from './Sidebar';
 import { TabBar } from './TabBar';
 import { MobileNav } from './MobileNav';
 import { CommandPalette, QuickOpen } from './Palette';
-import { DocumentView } from '../document/DocumentView';
 import { HomeView } from '../views/HomeView';
 import { FolderView } from '../views/FolderView';
 import { SearchView } from '../views/SearchView';
@@ -19,6 +18,19 @@ import { SettingsView } from '../views/SettingsView';
 import { useLayout } from '../hooks';
 import { TREE_DRAG_TYPE } from './FileTree';
 import { useGlobalShortcuts } from './shortcuts';
+
+// The editor and Markdown renderer are the heaviest code; load them with the first document.
+const DocumentView = lazy(() => import('../document/DocumentView').then((m) => ({ default: m.DocumentView })));
+
+function DocumentFallback() {
+  return (
+    <div className="mx-auto w-full max-w-[760px] space-y-3 px-6 py-16" aria-busy="true" aria-label="Loading document">
+      <div className="skeleton h-8 w-2/3" />
+      <div className="skeleton h-4 w-full" />
+      <div className="skeleton h-4 w-5/6" />
+    </div>
+  );
+}
 
 const SIDEBAR_KEY = 'mydoc:sidebar-width';
 
@@ -29,7 +41,11 @@ function RouteView() {
   const route = useRouter((s) => s.route);
   switch (route.name) {
     case 'doc':
-      return <DocumentView key="doc" id={route.id} anchor={route.anchor} />;
+      return (
+        <Suspense fallback={<DocumentFallback />}>
+          <DocumentView key="doc" id={route.id} anchor={route.anchor} />
+        </Suspense>
+      );
     case 'folder':
       return <FolderView key={route.id ?? 'root'} id={route.id} />;
     case 'search':

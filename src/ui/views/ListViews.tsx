@@ -99,10 +99,9 @@ export function TagsView({ tag }: { tag?: string }) {
   // The index version invalidates data derived from the (mutable) index.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const tags = useMemo(() => session().knowledge.allTags(tree), [tree, v]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const docs = useMemo(
     () =>
-      tag
+      tag && v >= 0
         ? session()
             .knowledge.docsWithTag(tree, tag)
             .map((id) => tree.get(id)!)

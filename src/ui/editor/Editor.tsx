@@ -71,10 +71,6 @@ interface Props {
 const stateCache = new Map<string, { state: EditorState; rev: number }>();
 const scrollCache = new Map<string, number>();
 
-export function forgetEditorState(id: string) {
-  stateCache.delete(id);
-  scrollCache.delete(id);
-}
 
 function wikiAndTagCompletion(docId: EntryId) {
   return (ctx: CompletionContext): CompletionResult | null => {
