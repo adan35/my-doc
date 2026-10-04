@@ -22,7 +22,6 @@ export interface Settings {
   explorerSort: SortKey;
   explorerSortDir: SortDir;
   explorerView: ExplorerView;
-  confirmPermanentDelete: boolean;
   spellcheck: boolean;
 }
 
@@ -40,7 +39,6 @@ export const DEFAULT_SETTINGS: Settings = {
   explorerSort: 'name',
   explorerSortDir: 'asc',
   explorerView: 'list',
-  confirmPermanentDelete: true,
   spellcheck: true,
 };
 
