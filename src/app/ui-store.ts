@@ -26,7 +26,13 @@ interface UiState {
 }
 
 const KEY = 'mydoc:layout';
-const saved = prefs.get<{ sidebarOpen?: boolean; rightPanelOpen?: boolean; rightPanel?: RightPanel }>(KEY, {});
+const MODES_KEY = 'mydoc:view-modes';
+const MAX_MODES = 300;
+const saved = prefs.get<{
+  sidebarOpen?: boolean;
+  rightPanelOpen?: boolean;
+  rightPanel?: RightPanel;
+}>(KEY, {});
 
 const persist = () => {
   const { sidebarOpen, rightPanelOpen, rightPanel } = useUi.getState();
@@ -41,7 +47,7 @@ export const useUi = create<UiState>((set) => ({
   overlay: null,
   focusMode: false,
   readingMode: false,
-  viewModes: {},
+  viewModes: prefs.get<Record<string, ViewMode>>(MODES_KEY, {}),
   setSidebar(open) {
     set({ sidebarOpen: open });
     persist();
@@ -63,6 +69,13 @@ export const useUi = create<UiState>((set) => ({
     set({ readingMode, focusMode: false });
   },
   setViewMode(id, mode) {
-    set((s) => ({ viewModes: { ...s.viewModes, [id]: mode } }));
+    set((s) => {
+      const { [id]: _old, ...rest } = s.viewModes;
+      // Most recent last; keep the map bounded.
+      const entries = Object.entries({ ...rest, [id]: mode }).slice(-MAX_MODES);
+      const viewModes = Object.fromEntries(entries);
+      prefs.set(MODES_KEY, viewModes);
+      return { viewModes };
+    });
   },
 }));

@@ -105,8 +105,9 @@ Back to [[Welcome to My Doc]].
 
 /** Creates starter content in a brand-new workspace. */
 export async function seedWorkspace(ws: Workspace) {
-  await ws.createFile(null, 'Welcome to My Doc.md', WELCOME);
+  const welcome = await ws.createFile(null, 'Welcome to My Doc.md', WELCOME);
   const guides = await ws.createFolder(null, 'Guides');
   await ws.createFile(guides.id, 'Markdown guide.md', MARKDOWN_GUIDE);
   await ws.createFile(guides.id, 'Keyboard shortcuts.md', SHORTCUTS);
+  return welcome;
 }

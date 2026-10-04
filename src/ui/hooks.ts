@@ -49,7 +49,9 @@ export function useDebounced<T>(value: T, delay: number): T {
   return v;
 }
 
-export const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+export const isMac =
+  typeof navigator !== 'undefined' &&
+  /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 export const modKey = isMac ? '⌘' : 'Ctrl';
 
 export function formatShortcut(s: string): string {
@@ -60,7 +62,8 @@ export function formatShortcut(s: string): string {
     .replace(/\+/g, isMac ? '' : '+');
 }
 
-const rtf = typeof Intl !== 'undefined' ? new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' }) : null;
+const rtf =
+  typeof Intl !== 'undefined' ? new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' }) : null;
 
 export function relativeTime(ts: number, now = Date.now()): string {
   const diff = (ts - now) / 1000;
@@ -70,7 +73,11 @@ export function relativeTime(ts: number, now = Date.now()): string {
   if (abs < 3600) return rtf.format(Math.round(diff / 60), 'minute');
   if (abs < 86400) return rtf.format(Math.round(diff / 3600), 'hour');
   if (abs < 86400 * 7) return rtf.format(Math.round(diff / 86400), 'day');
-  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(ts).getFullYear() === new Date(now).getFullYear() ? undefined : 'numeric' });
+  return new Date(ts).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: new Date(ts).getFullYear() === new Date(now).getFullYear() ? undefined : 'numeric',
+  });
 }
 
 export function useOnline(): boolean {

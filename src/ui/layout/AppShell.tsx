@@ -22,7 +22,8 @@ import { useGlobalShortcuts } from './shortcuts';
 
 const SIDEBAR_KEY = 'mydoc:sidebar-width';
 
-const isFileDrag = (e: React.DragEvent) => e.dataTransfer.types.includes('Files') && !e.dataTransfer.types.includes(TREE_DRAG_TYPE);
+const isFileDrag = (e: React.DragEvent) =>
+  e.dataTransfer.types.includes('Files') && !e.dataTransfer.types.includes(TREE_DRAG_TYPE);
 
 function RouteView() {
   const route = useRouter((s) => s.route);
@@ -119,7 +120,10 @@ export function AppShell() {
         if (route.name === 'home') navigate({ name: 'folder', id: null });
       }}
     >
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[90] focus:rounded-md focus:bg-ink focus:px-3 focus:py-2 focus:text-canvas">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[90] focus:rounded-md focus:bg-ink focus:px-3 focus:py-2 focus:text-canvas"
+      >
         Skip to content
       </a>
       {showSidebar && (
@@ -141,11 +145,15 @@ export function AppShell() {
             onPointerDown={(e) => {
               const startX = e.clientX;
               const start = width;
-              const move = (ev: PointerEvent) => setWidth(Math.min(420, Math.max(200, start + ev.clientX - startX)));
+              const move = (ev: PointerEvent) =>
+                setWidth(Math.min(420, Math.max(200, start + ev.clientX - startX)));
               const up = (ev: PointerEvent) => {
                 removeEventListener('pointermove', move);
                 removeEventListener('pointerup', up);
-                localStorage.setItem(SIDEBAR_KEY, String(Math.min(420, Math.max(200, start + ev.clientX - startX))));
+                localStorage.setItem(
+                  SIDEBAR_KEY,
+                  String(Math.min(420, Math.max(200, start + ev.clientX - startX))),
+                );
               };
               addEventListener('pointermove', move);
               addEventListener('pointerup', up);
@@ -154,18 +162,35 @@ export function AppShell() {
         </div>
       )}
       {showDrawer && (
-        <div className="fixed inset-0 z-40 flex" role="dialog" aria-modal="true" aria-label="Sidebar" onKeyDown={(e) => e.key === 'Escape' && useUi.getState().setDrawer(false)}>
+        <div
+          className="fixed inset-0 z-40 flex"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Sidebar"
+          onKeyDown={(e) => e.key === 'Escape' && useUi.getState().setDrawer(false)}
+        >
           <div className="animate-drawer relative h-full w-[min(300px,86vw)] shadow-3">
             <Sidebar drawer onClose={() => useUi.getState().setDrawer(false)} />
           </div>
-          <div className="flex-1 bg-[var(--scrim)]" onClick={() => useUi.getState().setDrawer(false)} aria-hidden />
+          <div
+            className="flex-1 bg-[var(--scrim)]"
+            onClick={() => useUi.getState().setDrawer(false)}
+            aria-hidden
+          />
         </div>
       )}
       <div className="flex min-w-0 flex-1 flex-col">
         {!phone && hasTabs && !immersive && (
           <div className="flex shrink-0 items-stretch">
             {(tablet || !sidebarOpen) && (
-              <button type="button" className="icon-btn m-1 self-center" aria-label="Open sidebar" onClick={() => (tablet ? useUi.getState().setDrawer(true) : useUi.getState().setSidebar(true))}>
+              <button
+                type="button"
+                className="icon-btn m-1 self-center"
+                aria-label="Open sidebar"
+                onClick={() =>
+                  tablet ? useUi.getState().setDrawer(true) : useUi.getState().setSidebar(true)
+                }
+              >
                 <PanelLeft size={16} />
               </button>
             )}
@@ -175,7 +200,14 @@ export function AppShell() {
           </div>
         )}
         {!phone && !hasTabs && route.name === 'doc' && (tablet || !sidebarOpen) && !immersive && (
-          <button type="button" className="icon-btn m-1" aria-label="Open sidebar" onClick={() => (tablet ? useUi.getState().setDrawer(true) : useUi.getState().setSidebar(true))}>
+          <button
+            type="button"
+            className="icon-btn m-1"
+            aria-label="Open sidebar"
+            onClick={() =>
+              tablet ? useUi.getState().setDrawer(true) : useUi.getState().setSidebar(true)
+            }
+          >
             <PanelLeft size={16} />
           </button>
         )}
@@ -187,10 +219,15 @@ export function AppShell() {
       {overlay === 'palette' && <CommandPalette />}
       {overlay === 'quickopen' && <QuickOpen />}
       {fileDrag && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-[55] flex justify-center px-4" aria-hidden>
+        <div
+          className="pointer-events-none fixed inset-x-0 bottom-6 z-[55] flex justify-center px-4"
+          aria-hidden
+        >
           <div className="flex items-center gap-3 rounded-lg border border-dashed border-primary bg-canvas px-5 py-3 shadow-2">
             <Upload size={18} className="text-primary" />
-            <p className="text-[14px] text-ink">Drop to import. Drop onto a folder to import into it.</p>
+            <p className="text-[14px] text-ink">
+              Drop to import. Drop onto a folder to import into it.
+            </p>
           </div>
         </div>
       )}

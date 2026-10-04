@@ -45,14 +45,19 @@ export function MenuHost() {
   const menu = useMenuStore((s) => s.menu);
   const { phone } = useLayout();
   if (!menu) return null;
-  return createPortal(phone ? <MenuSheet menu={menu} /> : <MenuPopover menu={menu} />, document.body);
+  return createPortal(
+    phone ? <MenuSheet menu={menu} /> : <MenuPopover menu={menu} />,
+    document.body,
+  );
 }
 
 function useMenuKeyboard(listRef: React.RefObject<HTMLDivElement | null>, onEscape: () => void) {
   useEffect(() => {
     const list = listRef.current;
     if (!list) return;
-    const items = () => [...list.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not([disabled])')];
+    const items = () => [
+      ...list.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not([disabled])'),
+    ];
     items()[0]?.focus();
     const onKey = (e: KeyboardEvent) => {
       const all = items();
@@ -76,7 +81,9 @@ function useMenuKeyboard(listRef: React.RefObject<HTMLDivElement | null>, onEsca
       } else if (e.key === 'Tab') {
         e.preventDefault();
       } else if (e.key.length === 1 && /\S/.test(e.key)) {
-        const next = [...all.slice(i + 1), ...all.slice(0, i + 1)].find((b) => b.textContent?.trim().toLowerCase().startsWith(e.key.toLowerCase()));
+        const next = [...all.slice(i + 1), ...all.slice(0, i + 1)].find((b) =>
+          b.textContent?.trim().toLowerCase().startsWith(e.key.toLowerCase()),
+        );
         next?.focus();
       }
     };
@@ -85,7 +92,13 @@ function useMenuKeyboard(listRef: React.RefObject<HTMLDivElement | null>, onEsca
   }, [listRef, onEscape]);
 }
 
-function MenuItems({ items, onPick }: { items: MenuEntry[]; onPick: (item: MenuItem, el: HTMLElement) => void }) {
+function MenuItems({
+  items,
+  onPick,
+}: {
+  items: MenuEntry[];
+  onPick: (item: MenuItem, el: HTMLElement) => void;
+}) {
   return (
     <>
       {items.map((item, i) =>
@@ -105,9 +118,15 @@ function MenuItems({ items, onPick }: { items: MenuEntry[]; onPick: (item: MenuI
               if (item.submenu && e.key === 'ArrowRight') onPick(item, e.currentTarget);
             }}
           >
-            {item.icon && <span className="flex w-4 shrink-0 justify-center text-steel [&>svg]:size-4">{item.icon}</span>}
+            {item.icon && (
+              <span className="flex w-4 shrink-0 justify-center text-steel [&>svg]:size-4">
+                {item.icon}
+              </span>
+            )}
             <span className="min-w-0 flex-1 truncate">{item.label}</span>
-            {item.shortcut && <span className="ml-4 text-xs text-stone">{formatShortcut(item.shortcut)}</span>}
+            {item.shortcut && (
+              <span className="ml-4 text-xs text-stone">{formatShortcut(item.shortcut)}</span>
+            )}
             {item.submenu && <ChevronRight size={14} className="text-stone" aria-hidden />}
           </button>
         ),
@@ -132,7 +151,9 @@ function MenuPopover({ menu }: { menu: MenuRequest }) {
     let top = 'width' in at ? at.bottom + 4 : at.y;
     if ('width' in at && left + width > innerWidth - 8) left = at.right - width;
     left = Math.max(8, Math.min(left, innerWidth - width - 8));
-    if (top + height > innerHeight - 8) top = 'width' in at ? Math.max(8, at.top - height - 4) : Math.max(8, innerHeight - height - 8);
+    if (top + height > innerHeight - 8)
+      top =
+        'width' in at ? Math.max(8, at.top - height - 4) : Math.max(8, innerHeight - height - 8);
     setPos({ left, top });
   }, [menu, items]);
 
@@ -187,7 +208,9 @@ function MenuSheet({ menu }: { menu: MenuRequest }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mx-auto mb-2 h-1 w-9 rounded-full bg-hairline-strong" aria-hidden />
-        {menu.label && <div className="px-3 pb-2 text-caption font-medium text-steel">{menu.label}</div>}
+        {menu.label && (
+          <div className="px-3 pb-2 text-caption font-medium text-steel">{menu.label}</div>
+        )}
         <MenuItems
           items={items}
           onPick={(item) => {

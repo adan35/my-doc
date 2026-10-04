@@ -29,19 +29,26 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
         <div className="card max-w-md p-8 text-center">
           <h1 className="text-[18px] font-semibold text-ink">Something went wrong</h1>
           <p className="mt-2 text-[14px] text-slate">
-            My Doc hit an unexpected problem. Your documents are stored safely, and any unsaved changes were kept for recovery.
+            My Doc hit an unexpected problem. Your documents are stored safely, and any unsaved
+            changes were kept for recovery.
           </p>
           <div className="mt-6 flex justify-center gap-2">
             <button type="button" className="btn btn-primary" onClick={() => location.reload()}>
               Reload My Doc
             </button>
-            <button type="button" className="btn btn-secondary" onClick={() => this.setState({ error: null })}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => this.setState({ error: null })}
+            >
               Try to continue
             </button>
           </div>
           <details className="mt-6 text-left text-caption text-steel">
             <summary className="cursor-pointer">Technical details</summary>
-            <pre className="mt-2 max-h-40 overflow-auto rounded-md bg-surface p-2 text-xs whitespace-pre-wrap">{this.state.error.message}</pre>
+            <pre className="mt-2 max-h-40 overflow-auto rounded-md bg-surface p-2 text-xs whitespace-pre-wrap">
+              {this.state.error.message}
+            </pre>
           </details>
         </div>
       </div>

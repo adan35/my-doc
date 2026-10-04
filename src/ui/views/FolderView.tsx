@@ -1,5 +1,19 @@
 import { useMemo, useState } from 'react';
-import { ArrowDownUp, ChevronRight, FilePlus2, FolderOpen, FolderPlus, LayoutGrid, List, Rows3, Upload, MoreHorizontal, X, FolderInput, Trash2 } from 'lucide-react';
+import {
+  ArrowDownUp,
+  ChevronRight,
+  FilePlus2,
+  FolderOpen,
+  FolderPlus,
+  LayoutGrid,
+  List,
+  Rows3,
+  Upload,
+  MoreHorizontal,
+  X,
+  FolderInput,
+  Trash2,
+} from 'lucide-react';
 import type { Entry, EntryId } from '@/domain/types';
 import { sortEntries, type SortKey } from '@/domain/tree';
 import { fileTypeOf } from '@/domain/names';
@@ -42,7 +56,8 @@ export function FolderView({ id }: { id: EntryId | null }) {
       if (q && !e.name.toLowerCase().includes(q)) return false;
       const t = e.kind === 'folder' ? 'folder' : fileTypeOf(e.name);
       if (typeFilter === 'folders') return t === 'folder';
-      if (typeFilter === 'documents') return t === 'markdown' || t === 'text' || t === 'code' || t === 'data';
+      if (typeFilter === 'documents')
+        return t === 'markdown' || t === 'text' || t === 'code' || t === 'data';
       if (typeFilter === 'images') return t === 'image';
       if (typeFilter === 'other') return t === 'binary' || t === 'pdf';
       return true;
@@ -53,7 +68,19 @@ export function FolderView({ id }: { id: EntryId | null }) {
   if (!live) {
     return (
       <Page title="Folder not found">
-        <EmptyState icon={<FolderOpen />} title="This folder no longer exists" actions={<button type="button" className="btn btn-secondary" onClick={() => navigate({ name: 'folder', id: null })}>All files</button>}>
+        <EmptyState
+          icon={<FolderOpen />}
+          title="This folder no longer exists"
+          actions={
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => navigate({ name: 'folder', id: null })}
+            >
+              All files
+            </button>
+          }
+        >
           It may have been moved to the Trash or deleted.
         </EmptyState>
       </Page>
@@ -68,7 +95,10 @@ export function FolderView({ id }: { id: EntryId | null }) {
         settings.update(
           settings.explorerSort === s.key
             ? { explorerSortDir: settings.explorerSortDir === 'asc' ? 'desc' : 'asc' }
-            : { explorerSort: s.key, explorerSortDir: s.key === 'name' || s.key === 'type' ? 'asc' : 'desc' },
+            : {
+                explorerSort: s.key,
+                explorerSortDir: s.key === 'name' || s.key === 'type' ? 'asc' : 'desc',
+              },
         ),
     })),
   ];
@@ -92,7 +122,11 @@ export function FolderView({ id }: { id: EntryId | null }) {
     <div
       className={`h-full ${dropping ? 'bg-[color-mix(in_srgb,var(--primary)_5%,transparent)]' : ''}`}
       onDragOver={(e) => {
-        if (!e.dataTransfer.types.includes('Files') && !e.dataTransfer.types.includes(TREE_DRAG_TYPE)) return;
+        if (
+          !e.dataTransfer.types.includes('Files') &&
+          !e.dataTransfer.types.includes(TREE_DRAG_TYPE)
+        )
+          return;
         e.preventDefault();
         setDropping(true);
       }}
@@ -103,23 +137,34 @@ export function FolderView({ id }: { id: EntryId | null }) {
         setDropping(false);
         const moving = e.dataTransfer.getData(TREE_DRAG_TYPE);
         if (moving) return void A.moveEntries([moving], id);
-        if (e.dataTransfer.files.length) await A.runImport(await itemsFromDataTransfer(e.dataTransfer), id);
+        if (e.dataTransfer.files.length)
+          await A.runImport(await itemsFromDataTransfer(e.dataTransfer), id);
       }}
     >
       <Page
         title={folder?.name ?? 'All files'}
         icon={<FolderOpen />}
-        back={phone && id ? () => navigate({ name: 'folder', id: folder?.parentId ?? null }) : undefined}
+        back={
+          phone && id ? () => navigate({ name: 'folder', id: folder?.parentId ?? null }) : undefined
+        }
         subtitle={
           ancestors.length || id ? (
             <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-0.5">
-              <button type="button" className="hover:text-ink hover:underline" onClick={() => navigate({ name: 'folder', id: null })}>
+              <button
+                type="button"
+                className="hover:text-ink hover:underline"
+                onClick={() => navigate({ name: 'folder', id: null })}
+              >
                 All files
               </button>
               {ancestors.map((a) => (
                 <span key={a.id} className="flex items-center gap-0.5">
                   <ChevronRight size={12} aria-hidden />
-                  <button type="button" className="hover:text-ink hover:underline" onClick={() => navigate({ name: 'folder', id: a.id })}>
+                  <button
+                    type="button"
+                    className="hover:text-ink hover:underline"
+                    onClick={() => navigate({ name: 'folder', id: a.id })}
+                  >
                     {a.name}
                   </button>
                 </span>
@@ -131,17 +176,38 @@ export function FolderView({ id }: { id: EntryId | null }) {
         }
         actions={
           <>
-            <button type="button" className="btn btn-primary" onClick={() => void A.newDocument(id)}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => void A.newDocument(id)}
+            >
               <FilePlus2 size={15} aria-hidden /> <span className="hidden sm:inline">New</span>
             </button>
-            <button type="button" className="icon-btn" aria-label="New folder" title="New folder" onClick={() => void A.newFolder(id)}>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="New folder"
+              title="New folder"
+              onClick={() => void A.newFolder(id)}
+            >
               <FolderPlus size={17} />
             </button>
-            <button type="button" className="icon-btn" aria-label="Import" title="Import" onClick={(e) => openMenuAt(e.currentTarget, importSubmenu(id), 'Import')}>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Import"
+              title="Import"
+              onClick={(e) => openMenuAt(e.currentTarget, importSubmenu(id), 'Import')}
+            >
               <Upload size={17} />
             </button>
             {folder && (
-              <button type="button" className="icon-btn" aria-label="Folder actions" onClick={(e) => openMenuAt(e.currentTarget, entryMenu(folder), folder.name)}>
+              <button
+                type="button"
+                className="icon-btn"
+                aria-label="Folder actions"
+                onClick={(e) => openMenuAt(e.currentTarget, entryMenu(folder), folder.name)}
+              >
                 <MoreHorizontal size={17} />
               </button>
             )}
@@ -149,8 +215,19 @@ export function FolderView({ id }: { id: EntryId | null }) {
         }
       >
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <input className="input h-8 max-w-[240px] flex-1" placeholder="Filter by name" aria-label="Filter by name" value={filter} onChange={(e) => setFilter(e.target.value)} />
-          <select className="input h-8 w-auto pr-8" aria-label="Filter by type" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}>
+          <input
+            className="input h-8 max-w-[240px] flex-1"
+            placeholder="Filter by name"
+            aria-label="Filter by name"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+          <select
+            className="input h-8 w-auto pr-8"
+            aria-label="Filter by type"
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
+          >
             <option value="all">All types</option>
             <option value="documents">Documents</option>
             <option value="folders">Folders</option>
@@ -158,12 +235,30 @@ export function FolderView({ id }: { id: EntryId | null }) {
             <option value="other">Other files</option>
           </select>
           <span className="flex-1" />
-          <button type="button" className="btn btn-ghost h-8 text-steel" onClick={(e) => openMenuAt(e.currentTarget, sortMenu, 'Sort by')}>
-            <ArrowDownUp size={14} aria-hidden /> {SORTS.find((s) => s.key === settings.explorerSort)?.label}
+          <button
+            type="button"
+            className="btn btn-ghost h-8 text-steel"
+            onClick={(e) => openMenuAt(e.currentTarget, sortMenu, 'Sort by')}
+          >
+            <ArrowDownUp size={14} aria-hidden />{' '}
+            {SORTS.find((s) => s.key === settings.explorerSort)?.label}
           </button>
           <div role="group" aria-label="View" className="flex rounded-md bg-surface p-0.5">
-            {([['list', <List size={15} />], ['compact', <Rows3 size={15} />], ['grid', <LayoutGrid size={15} />]] as [ExplorerView, React.ReactNode][]).map(([v, icon]) => (
-              <button key={v} type="button" aria-pressed={settings.explorerView === v} aria-label={`${v} view`} className={`flex size-7 items-center justify-center rounded-[5px] ${settings.explorerView === v ? 'bg-canvas text-ink shadow-1' : 'text-steel'}`} onClick={() => settings.update({ explorerView: v })}>
+            {(
+              [
+                ['list', <List size={15} />],
+                ['compact', <Rows3 size={15} />],
+                ['grid', <LayoutGrid size={15} />],
+              ] as [ExplorerView, React.ReactNode][]
+            ).map(([v, icon]) => (
+              <button
+                key={v}
+                type="button"
+                aria-pressed={settings.explorerView === v}
+                aria-label={`${v} view`}
+                className={`flex size-7 items-center justify-center rounded-[5px] ${settings.explorerView === v ? 'bg-canvas text-ink shadow-1' : 'text-steel'}`}
+                onClick={() => settings.update({ explorerView: v })}
+              >
                 {icon}
               </button>
             ))}
@@ -171,16 +266,33 @@ export function FolderView({ id }: { id: EntryId | null }) {
         </div>
 
         {selectedIds.length > 0 && (
-          <div className="mb-3 flex items-center gap-2 rounded-lg bg-primary-soft px-3 py-2 text-[14px] text-primary-soft-ink" role="toolbar" aria-label="Selection">
+          <div
+            className="mb-3 flex items-center gap-2 rounded-lg bg-primary-soft px-3 py-2 text-[14px] text-primary-soft-ink"
+            role="toolbar"
+            aria-label="Selection"
+          >
             <span className="font-medium">{selectedIds.length} selected</span>
             <span className="flex-1" />
-            <button type="button" className="btn btn-ghost h-7" onClick={() => void A.moveEntries(selectedIds).then(() => setSelected(new Set()))}>
+            <button
+              type="button"
+              className="btn btn-ghost h-7"
+              onClick={() => void A.moveEntries(selectedIds).then(() => setSelected(new Set()))}
+            >
               <FolderInput size={14} aria-hidden /> Move
             </button>
-            <button type="button" className="btn btn-ghost h-7" onClick={() => void A.trashEntries(selectedIds).then(() => setSelected(new Set()))}>
+            <button
+              type="button"
+              className="btn btn-ghost h-7"
+              onClick={() => void A.trashEntries(selectedIds).then(() => setSelected(new Set()))}
+            >
               <Trash2 size={14} aria-hidden /> Delete
             </button>
-            <button type="button" className="icon-btn" aria-label="Clear selection" onClick={() => setSelected(new Set())}>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Clear selection"
+              onClick={() => setSelected(new Set())}
+            >
               <X size={15} />
             </button>
           </div>
@@ -215,17 +327,27 @@ export function FolderView({ id }: { id: EntryId | null }) {
             })}
           />
         ) : filter || typeFilter !== 'all' ? (
-          <p className="py-10 text-center text-[14px] text-steel">Nothing here matches your filter.</p>
+          <p className="py-10 text-center text-[14px] text-steel">
+            Nothing here matches your filter.
+          </p>
         ) : (
           <EmptyState
             icon={<FolderOpen />}
             title={id ? 'This folder is empty' : 'Your workspace is empty'}
             actions={
               <>
-                <button type="button" className="btn btn-primary" onClick={() => void A.newDocument(id)}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => void A.newDocument(id)}
+                >
                   New document
                 </button>
-                <button type="button" className="btn btn-secondary" onClick={(e) => openMenuAt(e.currentTarget, importSubmenu(id), 'Import')}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={(e) => openMenuAt(e.currentTarget, importSubmenu(id), 'Import')}
+                >
                   Import files
                 </button>
               </>

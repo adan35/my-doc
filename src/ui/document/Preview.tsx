@@ -1,4 +1,12 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState, type Ref, useImperativeHandle } from 'react';
+import {
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Ref,
+  useImperativeHandle,
+} from 'react';
 import { createPortal } from 'react-dom';
 import type { EntryId } from '@/domain/types';
 import { isExternalHref, resolvePath, safeDecode } from '@/domain/paths';
@@ -61,11 +69,17 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
       const container = scrollParent(root.current);
       const el = nearestLineElement(root.current, line);
       if (!container || !el) return;
-      const top = el.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop - 16;
+      const top =
+        el.getBoundingClientRect().top -
+        container.getBoundingClientRect().top +
+        container.scrollTop -
+        16;
       container.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
     },
     scrollToSlug(slug: string) {
-      const el = root.current?.querySelector(`[id="${CSS.escape(slug)}"]`);
+      const el = root.current?.querySelector(
+        `[data-heading="${CSS.escape(slug)}"], [id="${CSS.escape(slug)}"]`,
+      );
       el?.scrollIntoView({ block: 'start' });
     },
   }));
@@ -103,7 +117,8 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
     }
     for (const a of el.querySelectorAll<HTMLAnchorElement>('a[href]')) {
       const href = a.getAttribute('href') ?? '';
-      if (isExternalHref(href) || href.startsWith('#') || a.classList.contains('heading-anchor')) continue;
+      if (isExternalHref(href) || href.startsWith('#') || a.classList.contains('heading-anchor'))
+        continue;
       const target = resolveHref(docId, href);
       if (!target) {
         a.classList.add('link-broken');
@@ -141,10 +156,14 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
 
   const onClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (target instanceof HTMLInputElement && target.classList.contains('task-list-item-checkbox')) {
+    if (
+      target instanceof HTMLInputElement &&
+      target.classList.contains('task-list-item-checkbox')
+    ) {
       e.preventDefault();
       const li = target.closest<HTMLElement>('[data-line]');
-      if (li && callbacks.current.onToggleTask) callbacks.current.onToggleTask(Number(li.dataset.line));
+      if (li && callbacks.current.onToggleTask)
+        callbacks.current.onToggleTask(Number(li.dataset.line));
       return;
     }
     if (target.classList.contains('copy-code')) {
@@ -168,7 +187,9 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
     if (href.startsWith('#')) {
       e.preventDefault();
       const slug = safeDecode(href.slice(1));
-      root.current?.querySelector(`[id="${CSS.escape(slug)}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      root.current
+        ?.querySelector(`[data-heading="${CSS.escape(slug)}"], [id="${CSS.escape(slug)}"]`)
+        ?.scrollIntoView({ block: 'start', behavior: 'smooth' });
       return;
     }
     if (isExternalHref(href)) return; // target=_blank + rel=noopener from the sanitizer
@@ -176,7 +197,8 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
     const [, fragment] = href.split('#');
     const id = resolveHref(docId, href);
     if (id) void openEntry(id, fragment ? safeDecode(fragment) : undefined);
-    else toast({ message: `"${safeDecode(href)}" doesn't exist in this workspace.`, tone: 'error' });
+    else
+      toast({ message: `"${safeDecode(href)}" doesn't exist in this workspace.`, tone: 'error' });
   };
 
   return (
@@ -200,7 +222,11 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
             tabIndex={-1}
             ref={(el) => el?.focus()}
           >
-            <img src={zoom.src} alt={zoom.alt} className="max-h-full max-w-full rounded-md bg-canvas object-contain shadow-3" />
+            <img
+              src={zoom.src}
+              alt={zoom.alt}
+              className="max-h-full max-w-full rounded-md bg-canvas object-contain shadow-3"
+            />
           </div>,
           document.body,
         )}

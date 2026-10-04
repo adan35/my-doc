@@ -23,7 +23,10 @@ export interface ConflictOptions {
   count: number;
 }
 
-export type ConflictChoice = { action: 'keep-both' | 'replace' | 'skip' | 'cancel'; applyToAll: boolean };
+export type ConflictChoice = {
+  action: 'keep-both' | 'replace' | 'skip' | 'cancel';
+  applyToAll: boolean;
+};
 
 export interface PickFolderOptions {
   title: string;
@@ -36,7 +39,11 @@ export type DialogRequest =
   | { kind: 'prompt'; options: PromptOptions; resolve: (v: string | null) => void }
   | { kind: 'confirm'; options: ConfirmOptions; resolve: (v: boolean) => void }
   | { kind: 'conflict'; options: ConflictOptions; resolve: (v: ConflictChoice) => void }
-  | { kind: 'pick-folder'; options: PickFolderOptions; resolve: (v: EntryId | null | undefined) => void }
+  | {
+      kind: 'pick-folder';
+      options: PickFolderOptions;
+      resolve: (v: EntryId | null | undefined) => void;
+    }
   | { kind: 'template'; resolve: (v: string | null) => void }
   | { kind: 'history'; entryId: EntryId; resolve: (v: void) => void }
   | { kind: 'shortcuts'; resolve: (v: void) => void };
@@ -78,6 +85,7 @@ export const dialogs = {
   pickFolder: (options: PickFolderOptions) =>
     request<EntryId | null | undefined>((resolve) => ({ kind: 'pick-folder', options, resolve })),
   template: () => request<string | null>((resolve) => ({ kind: 'template', resolve })),
-  history: (entryId: EntryId) => request<void>((resolve) => ({ kind: 'history', entryId, resolve })),
+  history: (entryId: EntryId) =>
+    request<void>((resolve) => ({ kind: 'history', entryId, resolve })),
   shortcuts: () => request<void>((resolve) => ({ kind: 'shortcuts', resolve })),
 };

@@ -11,7 +11,10 @@ export function ShortcutsDialog({ onClose }: { onClose(): void }) {
             <h3 className="section-label mb-2">{g.title}</h3>
             <dl className="divide-y divide-hairline-soft">
               {g.items.map(([label, keys]) => (
-                <div key={label} className="flex items-center justify-between gap-4 py-1.5 text-[14px]">
+                <div
+                  key={label}
+                  className="flex items-center justify-between gap-4 py-1.5 text-[14px]"
+                >
                   <dt className="text-charcoal">{label}</dt>
                   <dd>
                     <kbd className="kbd">{formatShortcut(keys)}</kbd>

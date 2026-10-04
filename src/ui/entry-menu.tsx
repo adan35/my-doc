@@ -1,5 +1,20 @@
 import {
-  Copy, Download, FilePlus2, FolderInput, FolderPlus, History, LayoutTemplate, PencilLine, Star, StarOff, Trash2, Upload, Tag, FileArchive, FileCode, Printer,
+  Copy,
+  Download,
+  FilePlus2,
+  FolderInput,
+  FolderPlus,
+  History,
+  LayoutTemplate,
+  PencilLine,
+  Star,
+  StarOff,
+  Trash2,
+  Upload,
+  Tag,
+  FileArchive,
+  FileCode,
+  Printer,
 } from 'lucide-react';
 import type { Entry } from '@/domain/types';
 import { isMarkdownName } from '@/domain/names';
@@ -15,15 +30,28 @@ export function entryMenu(e: Entry): MenuEntry[] {
   if (e.kind === 'folder') {
     items.push(
       { label: 'New document', icon: <FilePlus2 />, onSelect: () => void A.newDocument(e.id) },
-      { label: 'New from template…', icon: <LayoutTemplate />, onSelect: () => void A.newFromTemplate(e.id) },
+      {
+        label: 'New from template…',
+        icon: <LayoutTemplate />,
+        onSelect: () => void A.newFromTemplate(e.id),
+      },
       { label: 'New folder', icon: <FolderPlus />, onSelect: () => void A.newFolder(e.id) },
       { label: 'Import into folder', icon: <Upload />, submenu: importSubmenu(e.id) },
       'separator',
     );
   }
   items.push(
-    { label: e.favorite ? 'Remove from favorites' : 'Add to favorites', icon: e.favorite ? <StarOff /> : <Star />, onSelect: () => void A.toggleFavorite(e.id) },
-    { label: 'Rename…', icon: <PencilLine />, shortcut: SHORTCUTS.rename, onSelect: () => void A.renameEntry(e.id) },
+    {
+      label: e.favorite ? 'Remove from favorites' : 'Add to favorites',
+      icon: e.favorite ? <StarOff /> : <Star />,
+      onSelect: () => void A.toggleFavorite(e.id),
+    },
+    {
+      label: 'Rename…',
+      icon: <PencilLine />,
+      shortcut: SHORTCUTS.rename,
+      onSelect: () => void A.renameEntry(e.id),
+    },
     { label: 'Move to…', icon: <FolderInput />, onSelect: () => void A.moveEntries([e.id]) },
     { label: 'Duplicate', icon: <Copy />, onSelect: () => void A.duplicateEntry(e.id) },
   );
@@ -45,9 +73,21 @@ export function entryMenu(e: Entry): MenuEntry[] {
 
 export function exportSubmenu(e: Entry): MenuEntry[] {
   if (e.kind === 'folder') {
-    return [{ label: 'Folder as .zip', icon: <FileArchive />, onSelect: () => void A.exportEntry(e.id, 'zip') }];
+    return [
+      {
+        label: 'Folder as .zip',
+        icon: <FileArchive />,
+        onSelect: () => void A.exportEntry(e.id, 'zip'),
+      },
+    ];
   }
-  const items: MenuEntry[] = [{ label: `Original file (${e.name.split('.').pop()})`, icon: <Download />, onSelect: () => void A.exportEntry(e.id, 'file') }];
+  const items: MenuEntry[] = [
+    {
+      label: `Original file (${e.name.split('.').pop()})`,
+      icon: <Download />,
+      onSelect: () => void A.exportEntry(e.id, 'file'),
+    },
+  ];
   if (isMarkdownName(e.name)) {
     items.push(
       { label: 'HTML page', icon: <FileCode />, onSelect: () => void A.exportEntry(e.id, 'html') },

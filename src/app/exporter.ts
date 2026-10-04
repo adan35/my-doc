@@ -40,7 +40,10 @@ export async function buildZip(ws: Workspace, rootId: EntryId | null): Promise<U
 export async function exportZip(ws: Workspace, rootId: EntryId | null) {
   const data = await buildZip(ws, rootId);
   const name = rootId ? ws.get(rootId)!.name : ws.name;
-  downloadBlob(new Blob([data as Uint8Array<ArrayBuffer>], { type: 'application/zip' }), `${name}.zip`);
+  downloadBlob(
+    new Blob([data as Uint8Array<ArrayBuffer>], { type: 'application/zip' }),
+    `${name}.zip`,
+  );
 }
 
 export async function exportFile(ws: Workspace, id: EntryId) {
@@ -64,8 +67,12 @@ img{max-width:100%}.heading-anchor{display:none}.code-lang{display:none}hr{borde
 
 /** Standalone HTML (sanitized, no scripts) that opens anywhere. */
 export function documentHtml(title: string, markdown: string): string {
-  const { html } = renderMarkdown(markdown);
-  const safeTitle = title.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  // Headings carry data-heading in the app; real ids make anchors work in the exported file.
+  const html = renderMarkdown(markdown).html.replace(/ data-heading="/g, ' id="');
+  const safeTitle = title.replace(
+    /[&<>"]/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!,
+  );
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${safeTitle}</title>
@@ -78,7 +85,8 @@ export async function exportHtml(ws: Workspace, id: EntryId) {
   const e = ws.get(id);
   if (!e) return;
   const text = await ws.readText(id);
-  const html = isMarkdownName(e.name) ? documentHtml(baseName(e.name), text) : documentHtml(e.name, '~~~~~~~~\n' + text + '\n~~~~~~~~');
+  const html = isMarkdownName(e.name)
+    ? documentHtml(baseName(e.name), text)
+    : documentHtml(e.name, '~~~~~~~~\n' + text + '\n~~~~~~~~');
   downloadBlob(new Blob([html], { type: 'text/html' }), `${baseName(e.name)}.html`);
 }
-

@@ -30,7 +30,11 @@ export function RightPanel({ docId, text, activeLine, onJump, onClose }: Props) 
   const panel = useUi((s) => s.rightPanel);
   return (
     <aside aria-label="Document details" className="flex h-full min-h-0 w-full flex-col bg-canvas">
-      <div role="tablist" aria-label="Panels" className="flex items-center gap-0.5 border-b border-hairline px-2 py-1.5">
+      <div
+        role="tablist"
+        aria-label="Panels"
+        className="flex items-center gap-0.5 border-b border-hairline px-2 py-1.5"
+      >
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -60,10 +64,22 @@ export function RightPanel({ docId, text, activeLine, onJump, onClose }: Props) 
   );
 }
 
-export function Outline({ text, activeLine, onJump }: { text: string; activeLine: number; onJump(line: number): void }) {
+export function Outline({
+  text,
+  activeLine,
+  onJump,
+}: {
+  text: string;
+  activeLine: number;
+  onJump(line: number): void;
+}) {
   const headings = useMemo(() => extractHeadings(text), [text]);
   if (!headings.length) {
-    return <p className="px-1 text-caption text-steel">Headings you add (# Title, ## Section) appear here for quick navigation.</p>;
+    return (
+      <p className="px-1 text-caption text-steel">
+        Headings you add (# Title, ## Section) appear here for quick navigation.
+      </p>
+    );
   }
   const minLevel = Math.min(...headings.map((h) => h.level));
   let current = -1;
@@ -96,7 +112,9 @@ function Links({ docId }: { docId: EntryId }) {
   const s = session();
   const backlinks = s.knowledge.backlinks(tree, docId);
   const outgoing = s.knowledge.outgoing(tree, docId).filter((o) => o.link.kind !== 'image');
-  const uniqueOut = [...new Map(outgoing.filter((o) => o.targetId).map((o) => [o.targetId!, o])).values()];
+  const uniqueOut = [
+    ...new Map(outgoing.filter((o) => o.targetId).map((o) => [o.targetId!, o])).values(),
+  ];
   const broken = outgoing.filter((o) => !o.targetId);
   return (
     <div className="space-y-5">
@@ -105,12 +123,18 @@ function Links({ docId }: { docId: EntryId }) {
         {backlinks.length ? (
           <EntryList ids={backlinks} />
         ) : (
-          <p className="px-1 text-caption text-steel">No documents link here yet. Link with [text](./path.md) or [[Name]].</p>
+          <p className="px-1 text-caption text-steel">
+            No documents link here yet. Link with [text](./path.md) or [[Name]].
+          </p>
         )}
       </section>
       <section>
         <h3 className="section-label mb-1.5 px-1">Links from this document · {uniqueOut.length}</h3>
-        {uniqueOut.length ? <EntryList ids={uniqueOut.map((o) => o.targetId!)} icon={<ArrowUpRight size={13} />} /> : <p className="px-1 text-caption text-steel">None.</p>}
+        {uniqueOut.length ? (
+          <EntryList ids={uniqueOut.map((o) => o.targetId!)} icon={<ArrowUpRight size={13} />} />
+        ) : (
+          <p className="px-1 text-caption text-steel">None.</p>
+        )}
       </section>
       {broken.length > 0 && (
         <section>
@@ -139,11 +163,17 @@ function EntryList({ ids, icon }: { ids: EntryId[]; icon?: React.ReactNode }) {
         if (!e) return null;
         return (
           <li key={id}>
-            <button type="button" className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-hover" onClick={() => void openEntry(id)}>
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-hover"
+              onClick={() => void openEntry(id)}
+            >
               <FileIcon entry={e} className="shrink-0 text-steel" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13px] text-ink">{e.name}</span>
-                <span className="block truncate text-xs text-stone">{tree.dirOf(id) || 'Workspace root'}</span>
+                <span className="block truncate text-xs text-stone">
+                  {tree.dirOf(id) || 'Workspace root'}
+                </span>
               </span>
               {icon && <span className="text-stone">{icon}</span>}
             </button>
@@ -169,8 +199,16 @@ function DocInfo({ docId, text }: { docId: EntryId; text: string }) {
     ['Words', words.toLocaleString()],
     ['Characters', text.length.toLocaleString()],
     ['Reading time', `${Math.max(1, Math.round(words / 230))} min`],
-    ['Modified', <span title={new Date(e.updatedAt).toLocaleString()}>{relativeTime(e.updatedAt)}</span>],
-    ['Created', <span title={new Date(e.createdAt).toLocaleString()}>{new Date(e.createdAt).toLocaleDateString()}</span>],
+    [
+      'Modified',
+      <span title={new Date(e.updatedAt).toLocaleString()}>{relativeTime(e.updatedAt)}</span>,
+    ],
+    [
+      'Created',
+      <span title={new Date(e.createdAt).toLocaleString()}>
+        {new Date(e.createdAt).toLocaleDateString()}
+      </span>,
+    ],
   ];
   return (
     <div className="space-y-5">
@@ -180,15 +218,28 @@ function DocInfo({ docId, text }: { docId: EntryId; text: string }) {
           <div className="flex flex-wrap gap-1.5 px-1">
             {tags.map((t) => (
               <span key={t} className="tag-chip">
-                <button type="button" className="hover:underline" onClick={() => navigate({ name: 'tags', tag: t })}>
+                <button
+                  type="button"
+                  className="hover:underline"
+                  onClick={() => navigate({ name: 'tags', tag: t })}
+                >
                   #{t}
                 </button>
-                <button type="button" aria-label={`Remove tag ${t}`} className="opacity-60 hover:opacity-100" onClick={() => void removeTagFrom(docId, t)}>
+                <button
+                  type="button"
+                  aria-label={`Remove tag ${t}`}
+                  className="opacity-60 hover:opacity-100"
+                  onClick={() => void removeTagFrom(docId, t)}
+                >
                   <X size={11} />
                 </button>
               </span>
             ))}
-            <button type="button" className="flex h-[22px] items-center gap-1 rounded px-1.5 text-xs text-steel hover:bg-hover" onClick={() => void addTagTo(docId)}>
+            <button
+              type="button"
+              className="flex h-[22px] items-center gap-1 rounded px-1.5 text-xs text-steel hover:bg-hover"
+              onClick={() => void addTagTo(docId)}
+            >
               <Plus size={12} aria-hidden /> Add tag
             </button>
           </div>
@@ -203,7 +254,11 @@ function DocInfo({ docId, text }: { docId: EntryId; text: string }) {
         ))}
       </dl>
       {isMd && (
-        <button type="button" className="btn btn-secondary w-full" onClick={() => void dialogs.history(docId)}>
+        <button
+          type="button"
+          className="btn btn-secondary w-full"
+          onClick={() => void dialogs.history(docId)}
+        >
           <History size={15} aria-hidden /> Version history
         </button>
       )}

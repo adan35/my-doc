@@ -23,7 +23,12 @@ export function BinaryView({ entry }: { entry: Entry }) {
       .then((blob) => {
         if (cancelled) return;
         if (!blob) return setFailed(true);
-        const typed = new Blob([blob], { type: entry.mime && entry.mime !== 'application/octet-stream' ? entry.mime : mimeOf(entry.name) });
+        const typed = new Blob([blob], {
+          type:
+            entry.mime && entry.mime !== 'application/octet-stream'
+              ? entry.mime
+              : mimeOf(entry.name),
+        });
         u = URL.createObjectURL(typed);
         setUrl(u);
       })
@@ -46,7 +51,11 @@ export function BinaryView({ entry }: { entry: Entry }) {
     <div className="scroll-area h-full">
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 py-10">
         {type === 'image' && url && !failed ? (
-          <img src={url} alt={entry.name} className="max-h-[60vh] max-w-full rounded-lg border border-hairline object-contain" />
+          <img
+            src={url}
+            alt={entry.name}
+            className="max-h-[60vh] max-w-full rounded-lg border border-hairline object-contain"
+          />
         ) : (
           <div className="flex size-20 items-center justify-center rounded-xl bg-surface text-steel">
             <FileIcon entry={entry} size={36} />
@@ -63,7 +72,11 @@ export function BinaryView({ entry }: { entry: Entry }) {
           </p>
         </div>
         <div className="flex flex-wrap justify-center gap-2">
-          <button type="button" className="btn btn-primary" onClick={() => void exportEntry(entry.id, 'file')}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => void exportEntry(entry.id, 'file')}
+          >
             <Download size={15} aria-hidden /> Download
           </button>
           {url && (type === 'pdf' || type === 'image') && (

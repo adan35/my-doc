@@ -12,7 +12,9 @@ function useThemeAttribute() {
   const theme = useResolvedTheme();
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', theme === 'dark' ? '#191919' : '#ffffff'));
+    document
+      .querySelectorAll('meta[name="theme-color"]')
+      .forEach((m) => m.setAttribute('content', theme === 'dark' ? '#191919' : '#ffffff'));
   }, [theme]);
 }
 
@@ -26,7 +28,8 @@ function useLifecycle() {
       if (cancelled) return;
       // Validate the deep-linked document after restore.
       const route = useRouter.getState().route;
-      if (route.name === 'doc' && !session.workspace.get(route.id)) navigate({ name: 'home' }, { replace: true });
+      if (route.name === 'doc' && !session.workspace.get(route.id))
+        navigate({ name: 'home' }, { replace: true });
     });
     const unsub = session.workspace.subscribe((e) => {
       if (e.type === 'content' && e.source === 'external') editorActions.onExternalContent(e.ids);
@@ -95,8 +98,14 @@ export function App() {
         <div className="card max-w-md p-8 text-center">
           <h1 className="text-[18px] font-semibold text-ink">My Doc can't open its storage</h1>
           <p className="mt-2 text-[14px] text-slate">{error}</p>
-          <p className="mt-2 text-caption text-steel">Check that this site is allowed to store data, or try a regular (non-private) window.</p>
-          <button type="button" className="btn btn-primary mt-6" onClick={() => void appActions.init()}>
+          <p className="mt-2 text-caption text-steel">
+            Check that this site is allowed to store data, or try a regular (non-private) window.
+          </p>
+          <button
+            type="button"
+            className="btn btn-primary mt-6"
+            onClick={() => void appActions.init()}
+          >
             Try again
           </button>
         </div>

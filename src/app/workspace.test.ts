@@ -27,7 +27,9 @@ describe('Workspace', () => {
     expect(b.name).toBe('A (2).md');
     expect(await ws.readText(b.id)).toBe('# B');
     await expect(ws.createFile(f.id, 'bad/name.md')).rejects.toThrow(/slashes/);
-    await expect(ws.createFolder(f.id, 'a.md', { uniquify: false })).rejects.toThrow(/already exists/);
+    await expect(ws.createFolder(f.id, 'a.md', { uniquify: false })).rejects.toThrow(
+      /already exists/,
+    );
   });
 
   it('persists atomically and survives reopen', async () => {
@@ -50,18 +52,28 @@ describe('Workspace', () => {
   it('rewrites links when documents move or are renamed', async () => {
     const docs = await ws.createFolder(null, 'docs');
     const api = await ws.createFile(docs.id, 'API.md', '# API\n\nBack to [readme](../README.md).');
-    const readme = await ws.createFile(null, 'README.md', 'See [API](./docs/API.md#auth) and [[API]].');
+    const readme = await ws.createFile(
+      null,
+      'README.md',
+      'See [API](./docs/API.md#auth) and [[API]].',
+    );
     const archive = await ws.createFolder(null, 'Archive Area');
 
     await ws.move([api.id], archive.id);
-    expect(await ws.readText(readme.id)).toBe('See [API](./Archive%20Area/API.md#auth) and [[API]].');
+    expect(await ws.readText(readme.id)).toBe(
+      'See [API](./Archive%20Area/API.md#auth) and [[API]].',
+    );
     expect(await ws.readText(api.id)).toBe('# API\n\nBack to [readme](../README.md).');
 
     await ws.rename(api.id, 'Reference.md');
-    expect(await ws.readText(readme.id)).toBe('See [API](./Archive%20Area/Reference.md#auth) and [[Reference]].');
+    expect(await ws.readText(readme.id)).toBe(
+      'See [API](./Archive%20Area/Reference.md#auth) and [[Reference]].',
+    );
 
     await ws.move([readme.id], docs.id);
-    expect(await ws.readText(readme.id)).toBe('See [API](../Archive%20Area/Reference.md#auth) and [[Reference]].');
+    expect(await ws.readText(readme.id)).toBe(
+      'See [API](../Archive%20Area/Reference.md#auth) and [[Reference]].',
+    );
     expect(await ws.readText(api.id)).toBe('# API\n\nBack to [readme](../docs/README.md).');
   });
 
@@ -144,8 +156,16 @@ describe('WorkspaceSession indexes', () => {
     const s = new WorkspaceSession(ws);
     await s.ready;
     const docs = await ws.createFolder(null, 'Backend');
-    const auth = await ws.createFile(docs.id, 'AUTHENTICATION.md', '# Auth\n\nThe authentication service validates tokens. #security');
-    const readme = await ws.createFile(null, 'README.md', 'Read [auth](./Backend/AUTHENTICATION.md).');
+    const auth = await ws.createFile(
+      docs.id,
+      'AUTHENTICATION.md',
+      '# Auth\n\nThe authentication service validates tokens. #security',
+    );
+    const readme = await ws.createFile(
+      null,
+      'README.md',
+      'Read [auth](./Backend/AUTHENTICATION.md).',
+    );
     const hits = s.search.search('validates', ws.tree);
     expect(hits[0]?.id).toBe(auth.id);
     expect(hits[0]?.snippet?.text).toContain('authentication service validates');
@@ -168,20 +188,36 @@ describe('import / export', () => {
       { path: 'project/notes/TODO.md', file: file('- [ ] x') },
       { path: '../../evil.md', file: file('x') },
       { path: 'project/node_modules/pkg/index.js', file: file('x') },
-      { path: 'project/img.png', file: new Blob([new Uint8Array([137, 80, 78, 71, 0, 1])], { type: 'image/png' }) },
+      {
+        path: 'project/img.png',
+        file: new Blob([new Uint8Array([137, 80, 78, 71, 0, 1])], { type: 'image/png' }),
+      },
     ];
-    const r1 = await importItems(ws, null, items, async () => ({ action: 'keep-both', applyToAll: true }));
+    const r1 = await importItems(ws, null, items, async () => ({
+      action: 'keep-both',
+      applyToAll: true,
+    }));
     expect(r1.files).toBe(4);
     expect(r1.skipped.map((s) => s.reason)).toEqual(['Unsafe path.']);
     expect(ws.tree.findByPath('project/docs/API.md')).toBeTruthy();
     expect(ws.tree.findByPath('project/img.png')?.encoding).toBe('binary');
     expect(ws.tree.findByPath('project/node_modules/pkg/index.js')).toBeUndefined();
 
-    const r2 = await importItems(ws, null, [{ path: 'project/README.md', file: file('# New') }], async () => ({ action: 'replace', applyToAll: false }));
+    const r2 = await importItems(
+      ws,
+      null,
+      [{ path: 'project/README.md', file: file('# New') }],
+      async () => ({ action: 'replace', applyToAll: false }),
+    );
     expect(r2.replaced).toBe(1);
     expect(await ws.readText(ws.tree.findByPath('project/README.md')!.id)).toBe('# New');
 
-    const r3 = await importItems(ws, null, [{ path: 'project/README.md', file: file('# Third') }], async () => ({ action: 'keep-both', applyToAll: false }));
+    const r3 = await importItems(
+      ws,
+      null,
+      [{ path: 'project/README.md', file: file('# Third') }],
+      async () => ({ action: 'keep-both', applyToAll: false }),
+    );
     expect(r3.files).toBe(1);
     expect(ws.tree.findByPath('project/README (2).md')).toBeTruthy();
   });
@@ -189,7 +225,12 @@ describe('import / export', () => {
   it('imports zip archives without zip-slip', async () => {
     const { ws } = await openWs();
     const zip = zipSync({ 'a/b.md': strToU8('# B'), '../escape.md': strToU8('x') });
-    const r = await importItems(ws, null, [{ path: 'arch.zip', file: new Blob([zip]) }], async () => ({ action: 'skip', applyToAll: true }));
+    const r = await importItems(
+      ws,
+      null,
+      [{ path: 'arch.zip', file: new Blob([zip]) }],
+      async () => ({ action: 'skip', applyToAll: true }),
+    );
     expect(ws.tree.findByPath('arch/a/b.md')).toBeTruthy();
     expect(r.skipped.some((s) => s.reason === 'Unsafe path.')).toBe(true);
   });

@@ -27,8 +27,7 @@ export class WorkspaceError extends Error {
 }
 
 export type WorkspaceEvent =
-  | { type: 'tree' }
-  | { type: 'content'; ids: EntryId[]; source: 'save' | 'external' };
+  { type: 'tree' } | { type: 'content'; ids: EntryId[]; source: 'save' | 'external' };
 
 type Listener = (event: WorkspaceEvent) => void;
 
@@ -319,7 +318,10 @@ export class Workspace {
       const text = typeof content === 'string' ? content : null;
       const changes: ChangeSet = {};
       if (text !== null && this.isTextEntry(entry)) {
-        Object.assign(changes, await this.maybeSnapshot(entry, await this.readText(id), 'import', true));
+        Object.assign(
+          changes,
+          await this.maybeSnapshot(entry, await this.readText(id), 'import', true),
+        );
       }
       const next: Entry = {
         ...entry,
@@ -405,7 +407,8 @@ export class Workspace {
       rewritten,
     );
     this.emit({ type: 'tree' });
-    if (rewritten.size) this.emit({ type: 'content', ids: [...rewritten.keys()], source: 'external' });
+    if (rewritten.size)
+      this.emit({ type: 'content', ids: [...rewritten.keys()], source: 'external' });
   }
 
   private rewriteLinksForRelocation(oldTree: Tree, newTree: Tree): Map<EntryId, string> {
@@ -447,7 +450,10 @@ export class Workspace {
       if (!src) throw new WorkspaceError('This item no longer exists.');
       const tree = this.tree;
       const now = Date.now();
-      const ext = src.kind === 'file' && src.name.includes('.') ? src.name.slice(src.name.lastIndexOf('.')) : '';
+      const ext =
+        src.kind === 'file' && src.name.includes('.')
+          ? src.name.slice(src.name.lastIndexOf('.'))
+          : '';
       const stem = ext ? src.name.slice(0, -ext.length) : src.name;
       const rootName = this.freeName(src.parentId, `${stem} copy${ext}`);
       const putEntries: Entry[] = [];
@@ -516,9 +522,13 @@ export class Workspace {
         const e = this.entries.get(id);
         if (!e || e.trashedAt === undefined) continue;
         // If the original folder is gone or itself trashed, restore to the root.
-        const parentLive = e.parentId !== null && this.entries.has(e.parentId) && !tree.isTrashed(e.parentId);
+        const parentLive =
+          e.parentId !== null && this.entries.has(e.parentId) && !tree.isTrashed(e.parentId);
         const parentId = parentLive ? e.parentId : null;
-        const taken = [...this.siblingNames(parentId), ...restored.filter((r) => r.parentId === parentId).map((r) => r.name)];
+        const taken = [
+          ...this.siblingNames(parentId),
+          ...restored.filter((r) => r.parentId === parentId).map((r) => r.name),
+        ];
         restored.push({ ...e, parentId, trashedAt: undefined, name: uniqueName(e.name, taken) });
       }
       await this.apply({ putEntries: restored });
@@ -569,7 +579,11 @@ export class Workspace {
     const now = Date.now();
     await this.apply(
       {
-        putEntries: [...changed].map(([id, t]) => ({ ...this.entries.get(id)!, size: textBytes(t), updatedAt: now })),
+        putEntries: [...changed].map(([id, t]) => ({
+          ...this.entries.get(id)!,
+          size: textBytes(t),
+          updatedAt: now,
+        })),
         putContents: [...changed].map(([id, data]) => ({ id, data })),
       },
       changed,

@@ -21,14 +21,20 @@ export function diffLines(a: string, b: string, maxCells = 4_000_000): DiffLine[
   const a2 = A.slice(start, endA);
   const b2 = B.slice(start, endB);
   if (a2.length * b2.length > maxCells) {
-    return [...head, ...a2.map((text) => ({ type: 'del' as const, text })), ...b2.map((text) => ({ type: 'add' as const, text })), ...tail];
+    return [
+      ...head,
+      ...a2.map((text) => ({ type: 'del' as const, text })),
+      ...b2.map((text) => ({ type: 'add' as const, text })),
+      ...tail,
+    ];
   }
   const n = a2.length;
   const m = b2.length;
   const dp = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
   for (let i = n - 1; i >= 0; i--) {
     for (let j = m - 1; j >= 0; j--) {
-      dp[i]![j] = a2[i] === b2[j] ? dp[i + 1]![j + 1]! + 1 : Math.max(dp[i + 1]![j]!, dp[i]![j + 1]!);
+      dp[i]![j] =
+        a2[i] === b2[j] ? dp[i + 1]![j + 1]! + 1 : Math.max(dp[i + 1]![j]!, dp[i]![j + 1]!);
     }
   }
   const mid: DiffLine[] = [];

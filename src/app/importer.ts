@@ -10,7 +10,16 @@ export const MAX_IMPORT_TOTAL_BYTES = 1024 * 1024 * 1024;
 const MAX_ZIP_BYTES = 200 * 1024 * 1024;
 
 /** Paths that are never useful to import (OS junk, VCS internals, dependency folders). */
-const IGNORED_SEGMENTS = new Set(['.git', 'node_modules', '__MACOSX', '.DS_Store', 'Thumbs.db', 'desktop.ini', '.svn', '.hg']);
+const IGNORED_SEGMENTS = new Set([
+  '.git',
+  'node_modules',
+  '__MACOSX',
+  '.DS_Store',
+  'Thumbs.db',
+  'desktop.ini',
+  '.svn',
+  '.hg',
+]);
 
 export interface ImportItem {
   /** Path relative to the import root, using `/`. */
@@ -41,14 +50,16 @@ export async function readAsTextIfText(blob: Blob, name: string): Promise<string
   }
   try {
     const text = new TextDecoder('utf-8', { fatal: !known }).decode(buf);
-    return text.replace(/^﻿/, '');
+    return text.replace(/^\uFEFF/, '');
   } catch {
     return null;
   }
 }
 
 /** Expands .zip archives into individual items (with zip-slip protection). */
-export async function expandZips(items: ImportItem[]): Promise<{ items: ImportItem[]; skipped: ImportResult['skipped'] }> {
+export async function expandZips(
+  items: ImportItem[],
+): Promise<{ items: ImportItem[]; skipped: ImportResult['skipped'] }> {
   const out: ImportItem[] = [];
   const skipped: ImportResult['skipped'] = [];
   for (const item of items) {
@@ -199,14 +210,18 @@ export async function itemsFromDataTransfer(dt: DataTransfer): Promise<ImportIte
   const out: ImportItem[] = [];
   const walk = async (entry: FileSystemEntry, prefix: string): Promise<void> => {
     if (entry.isFile) {
-      const file = await new Promise<File>((res, rej) => (entry as FileSystemFileEntry).file(res, rej));
+      const file = await new Promise<File>((res, rej) =>
+        (entry as FileSystemFileEntry).file(res, rej),
+      );
       out.push({ path: prefix + entry.name, file });
     } else if (entry.isDirectory) {
       if (IGNORED_SEGMENTS.has(entry.name)) return;
       const reader = (entry as FileSystemDirectoryEntry).createReader();
       // readEntries returns results in batches; keep reading until empty.
       for (;;) {
-        const batch = await new Promise<FileSystemEntry[]>((res, rej) => reader.readEntries(res, rej));
+        const batch = await new Promise<FileSystemEntry[]>((res, rej) =>
+          reader.readEntries(res, rej),
+        );
         if (!batch.length) break;
         for (const child of batch) await walk(child, `${prefix}${entry.name}/`);
       }

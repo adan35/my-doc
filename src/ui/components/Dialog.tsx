@@ -13,10 +13,19 @@ interface Props {
   initialFocus?: React.RefObject<HTMLElement | null>;
 }
 
-const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select,textarea,[tabindex]:not([tabindex="-1"])';
+const FOCUSABLE =
+  'a[href],button:not([disabled]),input:not([disabled]),select,textarea,[tabindex]:not([tabindex="-1"])';
 
 /** Accessible modal: focus trap, Esc to close, focus restored on close. */
-export function Dialog({ title, description, onClose, children, footer, size = 'sm', initialFocus }: Props) {
+export function Dialog({
+  title,
+  description,
+  onClose,
+  children,
+  footer,
+  size = 'sm',
+  initialFocus,
+}: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descId = useId();
@@ -33,7 +42,9 @@ export function Dialog({ title, description, onClose, children, footer, size = '
         e.preventDefault();
         onCloseRef.current();
       } else if (e.key === 'Tab') {
-        const items = [...el.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((n) => n.offsetParent !== null);
+        const items = [...el.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+          (n) => n.offsetParent !== null,
+        );
         if (!items.length) return;
         const first = items[0]!;
         const last = items[items.length - 1]!;
@@ -57,7 +68,11 @@ export function Dialog({ title, description, onClose, children, footer, size = '
   const width = { sm: 'sm:max-w-[420px]', md: 'sm:max-w-[560px]', lg: 'sm:max-w-[760px]' }[size];
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-start sm:pt-[12vh]">
-      <div className="absolute inset-0 bg-[var(--scrim)]" aria-hidden onClick={() => onCloseRef.current()} />
+      <div
+        className="absolute inset-0 bg-[var(--scrim)]"
+        aria-hidden
+        onClick={() => onCloseRef.current()}
+      />
       <div
         ref={ref}
         role="dialog"
@@ -78,7 +93,12 @@ export function Dialog({ title, description, onClose, children, footer, size = '
               </div>
             )}
           </div>
-          <button type="button" className="icon-btn -mt-1 -mr-2" aria-label="Close" onClick={() => onCloseRef.current()}>
+          <button
+            type="button"
+            className="icon-btn -mt-1 -mr-2"
+            aria-label="Close"
+            onClick={() => onCloseRef.current()}
+          >
             <X size={16} />
           </button>
         </div>

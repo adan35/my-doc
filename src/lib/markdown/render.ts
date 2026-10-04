@@ -13,7 +13,14 @@ export interface RenderResult {
 }
 
 const escapeHtml = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+  s.replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
+  );
+
+/** CommonJS plugins may arrive wrapped in `{ default }` depending on the bundler. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const plugin = <T>(mod: T): T => ((mod as any)?.default ?? mod) as T;
 
 function createRenderer(): MarkdownIt {
   const md = markdownIt({
@@ -22,16 +29,26 @@ function createRenderer(): MarkdownIt {
     typographer: false,
     breaks: false,
   });
-  md.use(footnote);
-  md.use(taskLists, { enabled: true, label: false });
-  md.use(katex, { throwOnError: false, trust: false, strict: 'ignore', maxSize: 50, maxExpand: 500 } as never);
+  md.use(plugin(footnote));
+  md.use(plugin(taskLists), { enabled: true, label: false });
+  md.use(plugin(katex), {
+    throwOnError: false,
+    trust: false,
+    strict: 'ignore',
+    maxSize: 50,
+    maxExpand: 500,
+  } as never);
 
   // Annotate block tokens with their source line so the preview can scroll-sync,
   // jump to headings and toggle task checkboxes. Line offset is added at render time.
   md.core.ruler.push('source_lines', (state) => {
     const offset = (state.env as { lineOffset?: number }).lineOffset ?? 0;
     for (const token of state.tokens) {
-      if (token.map && token.nesting >= 0 && (token.level === 0 || token.type === 'list_item_open')) {
+      if (
+        token.map &&
+        token.nesting >= 0 &&
+        (token.level === 0 || token.type === 'list_item_open')
+      ) {
         token.attrSet('data-line', String(token.map![0] + offset));
       }
     }
@@ -45,12 +62,15 @@ function createRenderer(): MarkdownIt {
       const t = tokens[i]!;
       if (t.type !== 'heading_open') continue;
       const inline = tokens[i + 1];
-      const text = inline?.children?.reduce(
-        (acc: string, c: Token) => acc + (c.type === 'text' || c.type === 'code_inline' ? c.content : ''),
-        '',
-      ) ?? '';
+      const text =
+        inline?.children?.reduce(
+          (acc: string, c: Token) =>
+            acc + (c.type === 'text' || c.type === 'code_inline' ? c.content : ''),
+          '',
+        ) ?? '';
       const id = slug(text);
-      t.attrSet('id', id);
+      // data-heading rather than id: ids can clobber DOM globals (e.g. "title"), so the sanitizer strips them.
+      t.attrSet('data-heading', id);
       if (inline?.children) {
         const anchor = new state.Token('html_inline', '', 0);
         anchor.content = ` <a class="heading-anchor" href="#${escapeHtml(id)}" aria-label="Link to this section">#</a>`;
@@ -65,7 +85,8 @@ function createRenderer(): MarkdownIt {
     const line = token.attrGet('data-line');
     const lineAttr = line ? ` data-line="${escapeHtml(String(line))}"` : '';
     if (lang === 'mermaid') {
-      return `<div class="mermaid-block"${lineAttr} data-mermaid="${escapeHtml(token.content)}"><pre><code>${escapeHtml(token.content)}</code></pre></div>`;
+      // The diagram source lives in the code element; it's rendered lazily after sanitizing.
+      return `<div class="mermaid-block"${lineAttr}><pre><code>${escapeHtml(token.content)}</code></pre></div>`;
     }
     let body: string;
     if (lang && hljs.getLanguage(lang)) {

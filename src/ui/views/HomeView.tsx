@@ -1,4 +1,13 @@
-import { ArrowRight, FilePlus2, FolderPlus, LayoutTemplate, Upload, Star, Clock, Search } from 'lucide-react';
+import {
+  ArrowRight,
+  FilePlus2,
+  FolderPlus,
+  LayoutTemplate,
+  Upload,
+  Star,
+  Clock,
+  Search,
+} from 'lucide-react';
 import { useMemo } from 'react';
 import type { Entry } from '@/domain/types';
 import { useApp } from '@/app/app-store';
@@ -15,7 +24,13 @@ import { formatShortcut, relativeTime, useLayout, useTree } from '../hooks';
 
 function greeting() {
   const h = new Date().getHours();
-  return h < 5 ? 'Good evening' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  return h < 5
+    ? 'Good evening'
+    : h < 12
+      ? 'Good morning'
+      : h < 18
+        ? 'Good afternoon'
+        : 'Good evening';
 }
 
 export function HomeView() {
@@ -25,10 +40,20 @@ export function HomeView() {
   const { phone } = useLayout();
 
   const recentDocs = useMemo(
-    () => recents.map((r) => tree.get(r.id)).filter((e): e is Entry => !!e && !tree.isTrashed(e.id) && e.kind === 'file'),
+    () =>
+      recents
+        .map((r) => tree.get(r.id))
+        .filter((e): e is Entry => !!e && !tree.isTrashed(e.id) && e.kind === 'file'),
     [recents, tree],
   );
-  const modified = useMemo(() => tree.liveFiles().sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 8), [tree]);
+  const modified = useMemo(
+    () =>
+      tree
+        .liveFiles()
+        .sort((a, b) => b.updatedAt - a.updatedAt)
+        .slice(0, 8),
+    [tree],
+  );
   const favorites = useMemo(() => tree.liveEntries().filter((e) => e.favorite), [tree]);
   const recentFolders = useMemo(() => {
     const seen = new Set<string>();
@@ -48,31 +73,64 @@ export function HomeView() {
   return (
     <Page title={greeting()} subtitle={`${wsName} · ${total} document${total === 1 ? '' : 's'}`}>
       {phone && (
-        <button type="button" className="search-pill mb-6 flex h-11 w-full items-center gap-2 rounded-md border border-hairline bg-surface px-3 text-left text-steel" onClick={() => useUi.getState().setOverlay('quickopen')}>
+        <button
+          type="button"
+          className="search-pill mb-6 flex h-11 w-full items-center gap-2 rounded-md border border-hairline bg-surface px-3 text-left text-steel"
+          onClick={() => useUi.getState().setOverlay('quickopen')}
+        >
           <Search size={17} aria-hidden /> Search documents
         </button>
       )}
       <section aria-label="Quick actions" className="mb-8 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <QuickAction icon={<FilePlus2 />} label="New document" hint={formatShortcut(SHORTCUTS.newDoc)} primary onClick={() => void A.newDocument(null)} />
-        <QuickAction icon={<LayoutTemplate />} label="From template" onClick={() => void A.newFromTemplate(null)} />
-        <QuickAction icon={<FolderPlus />} label="New folder" onClick={() => void A.newFolder(null)} />
-        <QuickAction icon={<Upload />} label="Import" onClick={(el) => openMenuAt(el, importSubmenu(null), 'Import')} />
+        <QuickAction
+          icon={<FilePlus2 />}
+          label="New document"
+          hint={formatShortcut(SHORTCUTS.newDoc)}
+          primary
+          onClick={() => void A.newDocument(null)}
+        />
+        <QuickAction
+          icon={<LayoutTemplate />}
+          label="From template"
+          onClick={() => void A.newFromTemplate(null)}
+        />
+        <QuickAction
+          icon={<FolderPlus />}
+          label="New folder"
+          onClick={() => void A.newFolder(null)}
+        />
+        <QuickAction
+          icon={<Upload />}
+          label="Import"
+          onClick={(el) => openMenuAt(el, importSubmenu(null), 'Import')}
+        />
       </section>
 
       {continueDoc && (
         <section className="mb-8">
           <h2 className="section-label mb-2">Continue</h2>
-          <button type="button" className="card group flex w-full items-center gap-4 p-4 text-left transition-shadow hover:shadow-2" onClick={() => void A.openEntry(continueDoc.id)}>
+          <button
+            type="button"
+            className="card group flex w-full items-center gap-4 p-4 text-left transition-shadow hover:shadow-2"
+            onClick={() => void A.openEntry(continueDoc.id)}
+          >
             <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-ink">
               <FileIcon entry={continueDoc} size={20} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[16px] font-medium text-ink">{continueDoc.name}</span>
+              <span className="block truncate text-[16px] font-medium text-ink">
+                {continueDoc.name}
+              </span>
               <span className="block truncate text-caption text-steel">
-                {tree.dirOf(continueDoc.id) || 'Workspace root'} · edited {relativeTime(continueDoc.updatedAt)}
+                {tree.dirOf(continueDoc.id) || 'Workspace root'} · edited{' '}
+                {relativeTime(continueDoc.updatedAt)}
               </span>
             </span>
-            <ArrowRight size={18} className="shrink-0 text-stone transition-transform group-hover:translate-x-0.5" aria-hidden />
+            <ArrowRight
+              size={18}
+              className="shrink-0 text-stone transition-transform group-hover:translate-x-0.5"
+              aria-hidden
+            />
           </button>
         </section>
       )}
@@ -81,16 +139,23 @@ export function HomeView() {
         <section>
           <div className="mb-2 flex items-center justify-between">
             <h2 className="section-label flex items-center gap-1.5">
-              <Clock size={12} aria-hidden /> {recentDocs.length ? 'Recently opened' : 'Recently modified'}
+              <Clock size={12} aria-hidden />{' '}
+              {recentDocs.length ? 'Recently opened' : 'Recently modified'}
             </h2>
-            <button type="button" className="text-caption text-link hover:underline" onClick={() => navigate({ name: 'recent' })}>
+            <button
+              type="button"
+              className="text-caption text-link hover:underline"
+              onClick={() => navigate({ name: 'recent' })}
+            >
               View all
             </button>
           </div>
           {(recentDocs.length ? recentDocs : modified).length ? (
             <EntryList entries={(recentDocs.length ? recentDocs : modified).slice(0, 8)} showPath />
           ) : (
-            <p className="rounded-lg border border-dashed border-hairline-strong p-6 text-center text-[14px] text-steel">Documents you open will show up here.</p>
+            <p className="rounded-lg border border-dashed border-hairline-strong p-6 text-center text-[14px] text-steel">
+              Documents you open will show up here.
+            </p>
           )}
         </section>
         <aside className="space-y-8">
@@ -105,7 +170,9 @@ export function HomeView() {
                 ))}
               </ul>
             ) : (
-              <p className="text-caption text-steel">Star documents and folders to keep them one click away.</p>
+              <p className="text-caption text-steel">
+                Star documents and folders to keep them one click away.
+              </p>
             )}
           </section>
           {recentFolders.length > 0 && (
@@ -128,7 +195,12 @@ function SmallRow({ entry }: { entry: Entry }) {
   const tree = useTree()!;
   return (
     <li>
-      <button type="button" className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-hover" onClick={() => void A.openEntry(entry.id)} title={tree.pathOf(entry.id)}>
+      <button
+        type="button"
+        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-hover"
+        onClick={() => void A.openEntry(entry.id)}
+        title={tree.pathOf(entry.id)}
+      >
         <FileIcon entry={entry} className="shrink-0 text-steel" />
         <span className="truncate text-[14px] text-charcoal">{entry.name}</span>
       </button>
@@ -136,7 +208,19 @@ function SmallRow({ entry }: { entry: Entry }) {
   );
 }
 
-function QuickAction({ icon, label, hint, onClick, primary }: { icon: React.ReactNode; label: string; hint?: string; onClick(el: HTMLElement): void; primary?: boolean }) {
+function QuickAction({
+  icon,
+  label,
+  hint,
+  onClick,
+  primary,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  hint?: string;
+  onClick(el: HTMLElement): void;
+  primary?: boolean;
+}) {
   return (
     <button
       type="button"

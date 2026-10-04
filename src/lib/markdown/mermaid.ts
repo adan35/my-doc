@@ -11,18 +11,23 @@ function loadMermaid() {
 const cache = new Map<string, string>();
 
 export async function renderMermaidIn(root: HTMLElement, dark: boolean): Promise<void> {
-  const blocks = [...root.querySelectorAll<HTMLElement>('.mermaid-block[data-mermaid]')];
+  const blocks = [...root.querySelectorAll<HTMLElement>('.mermaid-block')];
   if (!blocks.length) return;
   const mermaid = await loadMermaid();
   const theme = dark ? 'dark' : 'default';
   if (currentTheme !== theme) {
-    mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme, fontFamily: 'inherit' });
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'strict',
+      theme,
+      fontFamily: 'inherit',
+    });
     currentTheme = theme;
     cache.clear();
   }
   for (const block of blocks) {
-    const src = block.dataset.mermaid ?? '';
-    if (block.dataset.rendered === src) continue;
+    if (block.dataset.rendered) continue;
+    const src = block.querySelector('code')?.textContent ?? '';
     try {
       let svg = cache.get(src);
       if (!svg) {

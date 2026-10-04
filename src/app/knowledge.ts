@@ -53,7 +53,11 @@ export class KnowledgeIndex {
   }
 
   /** Resolves a link written in document `fromId` to an entry id. */
-  resolve(tree: Tree, fromId: EntryId, link: Pick<RawLink, 'kind' | 'target'>): EntryId | undefined {
+  resolve(
+    tree: Tree,
+    fromId: EntryId,
+    link: Pick<RawLink, 'kind' | 'target'>,
+  ): EntryId | undefined {
     if (link.kind === 'wiki') return resolveWikiLink(tree, link.target)?.id;
     const path = resolvePath(tree.dirOf(fromId), link.target);
     if (path === null) return undefined;
@@ -75,7 +79,8 @@ export class KnowledgeIndex {
     const out: EntryId[] = [];
     for (const [from, f] of this.facts) {
       if (from === id || tree.isTrashed(from)) continue;
-      if (f.links.some((l) => l.kind !== 'image' && this.resolve(tree, from, l) === id)) out.push(from);
+      if (f.links.some((l) => l.kind !== 'image' && this.resolve(tree, from, l) === id))
+        out.push(from);
     }
     return out;
   }

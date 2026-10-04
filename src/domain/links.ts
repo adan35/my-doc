@@ -15,7 +15,8 @@ export interface RawLink {
 }
 
 // [text](target "title") / ![alt](target). Target may be wrapped in <...>.
-const MD_LINK_RE = /(!?)\[(?:[^\]\\]|\\.)*\]\(\s*(<[^>\n]*>|[^)\s]+)(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?\s*\)/g;
+const MD_LINK_RE =
+  /(!?)\[(?:[^\]\\]|\\.)*\]\(\s*(<[^>\n]*>|[^)\s]+)(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?\s*\)/g;
 const WIKI_RE = /(!?)\[\[([^\]|#\n]+)(#[^\]|\n]*)?(?:\|[^\]\n]*)?\]\]/g;
 
 /** Extracts internal (non-external) links from Markdown, skipping code. */

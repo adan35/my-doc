@@ -19,14 +19,35 @@ export function SaveStatus({ id }: { id: EntryId }) {
           ? 'Unsaved'
           : 'Saved';
   return (
-    <span className="flex items-center gap-1.5 text-caption whitespace-nowrap text-steel" role="status" aria-live="polite" title={status === 'error' ? `${error ?? ''} Your changes are kept and will be retried.` : online ? 'Saved on this device' : 'Offline: saved on this device'}>
+    <span
+      className="flex items-center gap-1.5 text-caption whitespace-nowrap text-steel"
+      role="status"
+      aria-live="polite"
+      title={
+        status === 'error'
+          ? `${error ?? ''} Your changes are kept and will be retried.`
+          : online
+            ? 'Saved on this device'
+            : 'Offline: saved on this device'
+      }
+    >
       {status === 'error' ? (
-        <button type="button" className="flex items-center gap-1 text-danger hover:underline" onClick={() => void editorActions.flush(id)}>
+        <button
+          type="button"
+          className="flex items-center gap-1 text-danger hover:underline"
+          onClick={() => void editorActions.flush(id)}
+        >
           <AlertCircle size={14} aria-hidden /> {label} · Retry
         </button>
       ) : (
         <>
-          {status === 'saving' ? <Loader2 size={13} className="animate-spin" aria-hidden /> : status === 'saved' ? <Check size={13} aria-hidden /> : <span className="size-1.5 rounded-full bg-warning" aria-hidden />}
+          {status === 'saving' ? (
+            <Loader2 size={13} className="animate-spin" aria-hidden />
+          ) : status === 'saved' ? (
+            <Check size={13} aria-hidden />
+          ) : (
+            <span className="size-1.5 rounded-full bg-warning" aria-hidden />
+          )}
           <span className="hidden sm:inline">{label}</span>
         </>
       )}

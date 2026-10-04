@@ -14,9 +14,28 @@ import {
   highlightSpecialChars,
 } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
-import { searchKeymap, highlightSelectionMatches, search, openSearchPanel } from '@codemirror/search';
-import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, type CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
-import { bracketMatching, indentOnInput, syntaxHighlighting, foldGutter, LanguageDescription, indentUnit } from '@codemirror/language';
+import {
+  searchKeymap,
+  highlightSelectionMatches,
+  search,
+  openSearchPanel,
+} from '@codemirror/search';
+import {
+  autocompletion,
+  closeBrackets,
+  closeBracketsKeymap,
+  completionKeymap,
+  type CompletionContext,
+  type CompletionResult,
+} from '@codemirror/autocomplete';
+import {
+  bracketMatching,
+  indentOnInput,
+  syntaxHighlighting,
+  foldGutter,
+  LanguageDescription,
+  indentUnit,
+} from '@codemirror/language';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { languages } from '@codemirror/language-data';
 import type { EntryId } from '@/domain/types';
@@ -68,7 +87,12 @@ function wikiAndTagCompletion(docId: EntryId) {
           .liveFiles()
           .filter((e) => e.id !== docId && isMarkdownName(e.name))
           .slice(0, 2000)
-          .map((e) => ({ label: baseName(e.name), detail: tree.dirOf(e.id) || undefined, apply: `${baseName(e.name)}]]`, type: 'text' })),
+          .map((e) => ({
+            label: baseName(e.name),
+            detail: tree.dirOf(e.id) || undefined,
+            apply: `${baseName(e.name)}]]`,
+            type: 'text',
+          })),
         validFor: /^[^\]\n]*$/,
       };
     }
@@ -94,11 +118,25 @@ function settingsExtensions(): Extension[] {
     s.wordWrap ? EditorView.lineWrapping : [],
     EditorState.tabSize.of(s.tabSize),
     indentUnit.of(' '.repeat(s.tabSize)),
-    EditorView.contentAttributes.of({ spellcheck: s.spellcheck ? 'true' : 'false', autocorrect: 'on', autocapitalize: 'sentences' }),
+    EditorView.contentAttributes.of({
+      spellcheck: s.spellcheck ? 'true' : 'false',
+      autocorrect: 'on',
+      autocapitalize: 'sentences',
+    }),
   ];
 }
 
-export function Editor({ docId, name, text, rev, readOnly, onChange, onSave, onScrollLine, ref }: Props) {
+export function Editor({
+  docId,
+  name,
+  text,
+  rev,
+  readOnly,
+  onChange,
+  onSave,
+  onScrollLine,
+  ref,
+}: Props) {
   const host = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const settingsComp = useRef(new Compartment());
@@ -118,7 +156,10 @@ export function Editor({ docId, name, text, rev, readOnly, onChange, onSave, onS
       const view = viewRef.current;
       if (!view) return;
       const l = view.state.doc.line(Math.min(Math.max(1, line + 1), view.state.doc.lines));
-      view.dispatch({ selection: { anchor: l.from }, effects: EditorView.scrollIntoView(l.from, { y: 'start', yMargin: 24 }) });
+      view.dispatch({
+        selection: { anchor: l.from },
+        effects: EditorView.scrollIntoView(l.from, { y: 'start', yMargin: 24 }),
+      });
       view.focus();
     },
     openSearch() {
@@ -163,7 +204,10 @@ export function Editor({ docId, name, text, rev, readOnly, onChange, onSave, onS
       state = cached.state;
     } else if (prevId === docId && view.state.doc.toString() !== text) {
       // External change to the open doc: replace content but keep undo history.
-      view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text }, userEvent: 'external' });
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: text },
+        userEvent: 'external',
+      });
       view.dom.dataset.rev = String(rev);
       return;
     } else if (prevId === docId) {
@@ -184,13 +228,17 @@ export function Editor({ docId, name, text, rev, readOnly, onChange, onSave, onS
   useEffect(
     () =>
       useSettings.subscribe(() => {
-        viewRef.current?.dispatch({ effects: settingsComp.current.reconfigure(settingsExtensions()) });
+        viewRef.current?.dispatch({
+          effects: settingsComp.current.reconfigure(settingsExtensions()),
+        });
       }),
     [],
   );
 
   useEffect(() => {
-    viewRef.current?.dispatch({ effects: readOnlyComp.current.reconfigure(EditorState.readOnly.of(!!readOnly)) });
+    viewRef.current?.dispatch({
+      effects: readOnlyComp.current.reconfigure(EditorState.readOnly.of(!!readOnly)),
+    });
   }, [readOnly, docId]);
 
   function configureLanguage(view: EditorView, fileName: string) {

@@ -24,7 +24,9 @@ export function parseHash(hash: string): Route {
   });
   switch (head) {
     case 'doc':
-      return rest[0] ? { name: 'doc', id: rest[0], anchor: params.get('h') ?? undefined } : { name: 'home' };
+      return rest[0]
+        ? { name: 'doc', id: rest[0], anchor: params.get('h') ?? undefined }
+        : { name: 'home' };
     case 'folder':
       return { name: 'folder', id: rest[0] || null };
     case 'search':
@@ -81,8 +83,13 @@ export const useRouter = create<RouterState>(() => ({
 }));
 
 if (typeof window !== 'undefined') {
-  window.addEventListener('popstate', () => useRouter.setState({ route: parseHash(location.hash) }));
-  window.addEventListener('hashchange', () => useRouter.setState({ route: parseHash(location.hash) }));
+  window.addEventListener('popstate', () =>
+    useRouter.setState({ route: parseHash(location.hash) }),
+  );
+  window.addEventListener('hashchange', () =>
+    useRouter.setState({ route: parseHash(location.hash) }),
+  );
 }
 
-export const navigate = (r: Route, opts?: { replace?: boolean }) => useRouter.getState().navigate(r, opts);
+export const navigate = (r: Route, opts?: { replace?: boolean }) =>
+  useRouter.getState().navigate(r, opts);

@@ -23,7 +23,11 @@ export function withFrontMatter(src: string, data: FrontMatter): string {
 }
 
 /** Strips front matter for rendering. */
-export function stripFrontMatter(src: string): { body: string; data: FrontMatter | null; lineOffset: number } {
+export function stripFrontMatter(src: string): {
+  body: string;
+  data: FrontMatter | null;
+  lineOffset: number;
+} {
   const { bodyOffset } = splitFrontMatter(src);
   const head = src.slice(0, bodyOffset);
   return {

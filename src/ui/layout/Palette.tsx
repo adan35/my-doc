@@ -22,7 +22,23 @@ interface Item {
   run(): void;
 }
 
-function PaletteFrame({ label, placeholder, query, setQuery, items, footer, emptyText }: { label: string; placeholder: string; query: string; setQuery(q: string): void; items: Item[]; footer?: ReactNode; emptyText: string }) {
+function PaletteFrame({
+  label,
+  placeholder,
+  query,
+  setQuery,
+  items,
+  footer,
+  emptyText,
+}: {
+  label: string;
+  placeholder: string;
+  query: string;
+  setQuery(q: string): void;
+  items: Item[];
+  footer?: ReactNode;
+  emptyText: string;
+}) {
   const [index, setIndex] = useState(0);
   const listId = useId();
   const listRef = useRef<HTMLDivElement>(null);
@@ -38,9 +54,17 @@ function PaletteFrame({ label, placeholder, query, setQuery, items, footer, empt
   };
   let lastGroup: string | undefined;
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-start justify-center px-2 pt-[8vh] sm:px-4 sm:pt-[12vh]" onMouseDown={(e) => e.target === e.currentTarget && close()}>
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center px-2 pt-[8vh] sm:px-4 sm:pt-[12vh]"
+      onMouseDown={(e) => e.target === e.currentTarget && close()}
+    >
       <div className="absolute inset-0 bg-[var(--scrim)]" aria-hidden onClick={close} />
-      <div role="dialog" aria-modal="true" aria-label={label} className="popover animate-in relative flex max-h-[min(560px,80vh)] w-full max-w-[620px] flex-col overflow-hidden">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={label}
+        className="popover animate-in relative flex max-h-[min(560px,80vh)] w-full max-w-[620px] flex-col overflow-hidden"
+      >
         <div className="flex items-center gap-2.5 border-b border-hairline px-4">
           <Search size={17} className="shrink-0 text-steel" aria-hidden />
           <input
@@ -75,8 +99,16 @@ function PaletteFrame({ label, placeholder, query, setQuery, items, footer, empt
           />
           <kbd className="kbd hidden sm:inline-flex">Esc</kbd>
         </div>
-        <div ref={listRef} id={listId} role="listbox" aria-label={label} className="scroll-area min-h-0 flex-1 p-1.5">
-          {!items.length && <p className="px-3 py-8 text-center text-[14px] text-steel">{emptyText}</p>}
+        <div
+          ref={listRef}
+          id={listId}
+          role="listbox"
+          aria-label={label}
+          className="scroll-area min-h-0 flex-1 p-1.5"
+        >
+          {!items.length && (
+            <p className="px-3 py-8 text-center text-[14px] text-steel">{emptyText}</p>
+          )}
           {items.map((item, i) => {
             const header = item.group && item.group !== lastGroup ? item.group : null;
             lastGroup = item.group;
@@ -92,19 +124,31 @@ function PaletteFrame({ label, placeholder, query, setQuery, items, footer, empt
                   onMouseMove={() => i !== index && setIndex(i)}
                   onClick={() => run(item)}
                 >
-                  <span className="flex w-5 shrink-0 justify-center text-steel [&>svg]:size-4">{item.icon}</span>
+                  <span className="flex w-5 shrink-0 justify-center text-steel [&>svg]:size-4">
+                    {item.icon}
+                  </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[14px] text-ink">{item.title}</span>
-                    {item.subtitle && <span className="block truncate text-caption text-steel">{item.subtitle}</span>}
+                    {item.subtitle && (
+                      <span className="block truncate text-caption text-steel">
+                        {item.subtitle}
+                      </span>
+                    )}
                   </span>
                   {item.hint}
-                  {i === index && <CornerDownLeft size={14} className="shrink-0 text-stone" aria-hidden />}
+                  {i === index && (
+                    <CornerDownLeft size={14} className="shrink-0 text-stone" aria-hidden />
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
-        {footer && <div className="flex items-center gap-3 border-t border-hairline px-4 py-2 text-xs text-stone">{footer}</div>}
+        {footer && (
+          <div className="flex items-center gap-3 border-t border-hairline px-4 py-2 text-xs text-stone">
+            {footer}
+          </div>
+        )}
       </div>
     </div>,
     document.body,
@@ -116,7 +160,14 @@ export function CommandPalette() {
   const commands = useMemo(() => getCommands(), []);
   const items = useMemo<Item[]>(() => {
     const scored = commands
-      .map((c) => ({ c, m: fuzzyScore(query, `${c.title}`) ?? (query && c.keywords && fuzzyScore(query, c.keywords) ? { score: -500, positions: [] } : null) }))
+      .map((c) => ({
+        c,
+        m:
+          fuzzyScore(query, `${c.title}`) ??
+          (query && c.keywords && fuzzyScore(query, c.keywords)
+            ? { score: -500, positions: [] }
+            : null),
+      }))
       .filter((x) => x.m)
       .sort((a, b) => (query ? b.m!.score - a.m!.score : 0));
     return scored.map(({ c, m }) => ({
@@ -128,7 +179,16 @@ export function CommandPalette() {
       run: c.run,
     }));
   }, [commands, query]);
-  return <PaletteFrame label="Command palette" placeholder="Type a command…" query={query} setQuery={setQuery} items={items} emptyText="No matching commands." />;
+  return (
+    <PaletteFrame
+      label="Command palette"
+      placeholder="Type a command…"
+      query={query}
+      setQuery={setQuery}
+      items={items}
+      emptyText="No matching commands."
+    />
+  );
 }
 
 export function QuickOpen() {
@@ -147,12 +207,17 @@ export function QuickOpen() {
         icon: <FileIcon entry={e} />,
         title: <Highlight text={e.name} positions={positions} />,
         subtitle: dir || 'Workspace root',
-        hint: !q && e.updatedAt ? <span className="text-xs text-stone">{relativeTime(e.updatedAt)}</span> : undefined,
+        hint:
+          !q && e.updatedAt ? (
+            <span className="text-xs text-stone">{relativeTime(e.updatedAt)}</span>
+          ) : undefined,
         run: () => void openEntry(id),
       };
     };
     if (!q) {
-      const recent = recents.map((r) => toItem(r.id, undefined, 'Recent')).filter(Boolean) as Item[];
+      const recent = recents
+        .map((r) => toItem(r.id, undefined, 'Recent'))
+        .filter(Boolean) as Item[];
       if (recent.length) return recent.slice(0, 12);
       return tree
         .liveFiles()
@@ -169,10 +234,17 @@ export function QuickOpen() {
       const byPath = byName ? null : fuzzyScore(q, tree.pathOf(e.id));
       const m = byName ?? (byPath ? { score: byPath.score - 300, positions: [] } : null);
       if (!m) continue;
-      scored.push({ id: e.id, score: m.score + (recentSet.get(e.id) ?? 0) + (e.kind === 'folder' ? -5 : 0), positions: m.positions });
+      scored.push({
+        id: e.id,
+        score: m.score + (recentSet.get(e.id) ?? 0) + (e.kind === 'folder' ? -5 : 0),
+        positions: m.positions,
+      });
     }
     scored.sort((a, b) => b.score - a.score);
-    const out = scored.slice(0, 50).map((s) => toItem(s.id, s.positions)).filter(Boolean) as Item[];
+    const out = scored
+      .slice(0, 50)
+      .map((s) => toItem(s.id, s.positions))
+      .filter(Boolean) as Item[];
     // Offer full-text search as the last option.
     out.push({
       key: '__search',

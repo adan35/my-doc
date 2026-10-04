@@ -30,7 +30,11 @@ export function TabBar() {
   };
 
   return (
-    <div role="tablist" aria-label="Open documents" className="flex h-9 shrink-0 items-end gap-px overflow-x-auto border-b border-hairline bg-surface-soft px-1.5 [scrollbar-width:none] no-print">
+    <div
+      role="tablist"
+      aria-label="Open documents"
+      className="flex h-9 shrink-0 items-end gap-px overflow-x-auto border-b border-hairline bg-surface-soft px-1.5 [scrollbar-width:none] no-print"
+    >
       {tabs.map((id, i) => {
         const e = tree.get(id);
         if (!e) return null;
@@ -44,15 +48,22 @@ export function TabBar() {
             draggable
             title={tree.pathOf(id)}
             className={`group relative flex h-8 max-w-[200px] min-w-[96px] shrink-0 cursor-pointer items-center gap-1.5 rounded-t-md pr-1 pl-2.5 text-[13px] select-none ${
-              selected ? 'bg-canvas text-ink shadow-[0_1px_0_var(--canvas)]' : 'text-steel hover:bg-hover hover:text-charcoal'
+              selected
+                ? 'bg-canvas text-ink shadow-[0_1px_0_var(--canvas)]'
+                : 'text-steel hover:bg-hover hover:text-charcoal'
             } ${dragIndex === i ? 'opacity-50' : ''}`}
             onClick={() => void openEntry(id)}
             onAuxClick={(ev) => ev.button === 1 && void close(id)}
             onKeyDown={(ev) => {
               if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') {
-                const next = tabs[(i + (ev.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length]!;
+                const next =
+                  tabs[(i + (ev.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length]!;
                 void openEntry(next);
-                requestAnimationFrame(() => document.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.focus());
+                requestAnimationFrame(() =>
+                  document
+                    .querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+                    ?.focus(),
+                );
               } else if (ev.key === 'Delete') void close(id);
             }}
             onContextMenu={(ev) => {
@@ -62,10 +73,21 @@ export function TabBar() {
                 label: e.name,
                 items: [
                   { label: 'Close', shortcut: SHORTCUTS.closeTab, onSelect: () => void close(id) },
-                  { label: 'Close others', onSelect: () => void editorActions.closeOthers(id).then(() => openEntry(id)) },
-                  { label: 'Close all', onSelect: () => void editorActions.closeAll().then(() => navigate({ name: 'home' })) },
+                  {
+                    label: 'Close others',
+                    onSelect: () => void editorActions.closeOthers(id).then(() => openEntry(id)),
+                  },
+                  {
+                    label: 'Close all',
+                    onSelect: () =>
+                      void editorActions.closeAll().then(() => navigate({ name: 'home' })),
+                  },
                   'separator',
-                  { label: 'Reopen closed tab', shortcut: SHORTCUTS.reopenTab, onSelect: () => void reopenClosedTab() },
+                  {
+                    label: 'Reopen closed tab',
+                    shortcut: SHORTCUTS.reopenTab,
+                    onSelect: () => void reopenClosedTab(),
+                  },
                   { label: 'Reveal in sidebar', onSelect: () => appActions.reveal(id) },
                 ],
               });
@@ -111,8 +133,20 @@ function TabCloseButton({ id, name, onClose }: { id: string; name: string; onClo
         onClose();
       }}
     >
-      {dirty && <span className="absolute size-2 rounded-full bg-steel group-hover/close:hidden" aria-hidden />}
-      <X size={13} className={dirty ? 'hidden group-hover/close:block' : 'opacity-0 group-hover:opacity-100 group-aria-selected:opacity-100'} />
+      {dirty && (
+        <span
+          className="absolute size-2 rounded-full bg-steel group-hover/close:hidden"
+          aria-hidden
+        />
+      )}
+      <X
+        size={13}
+        className={
+          dirty
+            ? 'hidden group-hover/close:block'
+            : 'opacity-0 group-hover:opacity-100 group-aria-selected:opacity-100'
+        }
+      />
     </button>
   );
 }

@@ -45,7 +45,12 @@ export function FileTree() {
       const children = sortEntries(tree.childrenOf(parentId), sortKey, sortDir);
       for (const entry of children) {
         const isOpen = entry.kind === 'folder' && !!expanded[entry.id];
-        out.push({ entry, depth, expanded: isOpen, hasChildren: entry.kind === 'folder' && tree.childrenOf(entry.id).length > 0 });
+        out.push({
+          entry,
+          depth,
+          expanded: isOpen,
+          hasChildren: entry.kind === 'folder' && tree.childrenOf(entry.id).length > 0,
+        });
         if (isOpen) walk(entry.id, depth + 1);
       }
     };
@@ -74,13 +79,18 @@ export function FileTree() {
     const el = scrollRef.current;
     if (i < 0 || !el) return;
     const y = i * rowHeight;
-    if (y < el.scrollTop || y + rowHeight > el.scrollTop + el.clientHeight) el.scrollTop = y - el.clientHeight / 3;
+    if (y < el.scrollTop || y + rowHeight > el.scrollTop + el.clientHeight)
+      el.scrollTop = y - el.clientHeight / 3;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId]);
 
   const start = Math.max(0, Math.floor(viewport.top / rowHeight) - OVERSCAN);
-  const end = Math.min(rows.length, Math.ceil((viewport.top + viewport.height) / rowHeight) + OVERSCAN);
-  const tabStop = focusId && rows.some((r) => r.entry.id === focusId) ? focusId : (activeId ?? rows[0]?.entry.id);
+  const end = Math.min(
+    rows.length,
+    Math.ceil((viewport.top + viewport.height) / rowHeight) + OVERSCAN,
+  );
+  const tabStop =
+    focusId && rows.some((r) => r.entry.id === focusId) ? focusId : (activeId ?? rows[0]?.entry.id);
 
   const focusRow = useCallback(
     (id: EntryId) => {
@@ -90,9 +100,12 @@ export function FileTree() {
       if (el && i >= 0) {
         const y = i * rowHeight;
         if (y < el.scrollTop) el.scrollTop = y;
-        else if (y + rowHeight > el.scrollTop + el.clientHeight) el.scrollTop = y + rowHeight - el.clientHeight;
+        else if (y + rowHeight > el.scrollTop + el.clientHeight)
+          el.scrollTop = y + rowHeight - el.clientHeight;
       }
-      requestAnimationFrame(() => scrollRef.current?.querySelector<HTMLElement>(`[data-id="${CSS.escape(id)}"]`)?.focus());
+      requestAnimationFrame(() =>
+        scrollRef.current?.querySelector<HTMLElement>(`[data-id="${CSS.escape(id)}"]`)?.focus(),
+      );
     },
     [rows, rowHeight],
   );
@@ -117,7 +130,8 @@ export function FileTree() {
       if (entry.kind === 'folder') appActions.setExpanded(entry.id, !row.expanded);
       else void A.openEntry(entry.id);
     } else if (key === 'F2') void A.renameEntry(entry.id);
-    else if (key === 'Delete' || (key === 'Backspace' && (e.metaKey || e.ctrlKey))) void A.trashEntries([entry.id]);
+    else if (key === 'Delete' || (key === 'Backspace' && (e.metaKey || e.ctrlKey)))
+      void A.trashEntries([entry.id]);
     else if (key === 'ContextMenu' || (key === 'F10' && e.shiftKey)) {
       const el = e.target as HTMLElement;
       openMenuAt(el, entryMenu(entry), entry.name);
@@ -134,7 +148,8 @@ export function FileTree() {
       if (tree.get(moving)?.parentId !== targetId) await A.moveEntries([moving], targetId);
       return;
     }
-    if (e.dataTransfer.files.length) await A.runImport(await itemsFromDataTransfer(e.dataTransfer), targetId);
+    if (e.dataTransfer.files.length)
+      await A.runImport(await itemsFromDataTransfer(e.dataTransfer), targetId);
   };
 
   const dropProps = (targetId: EntryId | null) => ({
@@ -166,7 +181,12 @@ export function FileTree() {
       className={`scroll-area relative min-h-0 flex-1 px-1.5 pb-6 ${dropTarget === 'root' ? 'bg-[color-mix(in_srgb,var(--primary)_6%,transparent)]' : ''}`}
       {...dropProps(null)}
     >
-      <div role="tree" aria-label="Files" style={{ height: rows.length * rowHeight, position: 'relative' }} onKeyDown={onKeyDown}>
+      <div
+        role="tree"
+        aria-label="Files"
+        style={{ height: rows.length * rowHeight, position: 'relative' }}
+        onKeyDown={onKeyDown}
+      >
         {rows.slice(start, end).map((row, i) => (
           <TreeRow
             key={row.entry.id}
@@ -179,7 +199,9 @@ export function FileTree() {
             setsize={rows.length}
             posinset={start + i + 1}
             onFocus={setFocusId}
-            dropProps={row.entry.kind === 'folder' ? dropProps(row.entry.id) : dropProps(row.entry.parentId)}
+            dropProps={
+              row.entry.kind === 'folder' ? dropProps(row.entry.id) : dropProps(row.entry.parentId)
+            }
           />
         ))}
       </div>
@@ -200,7 +222,17 @@ interface RowProps {
   dropProps: object;
 }
 
-const TreeRow = memo(function TreeRow({ row, top, height, active, tabbable, dropping, posinset, onFocus, dropProps }: RowProps) {
+const TreeRow = memo(function TreeRow({
+  row,
+  top,
+  height,
+  active,
+  tabbable,
+  dropping,
+  posinset,
+  onFocus,
+  dropProps,
+}: RowProps) {
   const { entry, depth, expanded, hasChildren } = row;
   const isFolder = entry.kind === 'folder';
   return (
@@ -210,6 +242,7 @@ const TreeRow = memo(function TreeRow({ row, top, height, active, tabbable, drop
       aria-expanded={isFolder ? expanded : undefined}
       aria-selected={active}
       aria-posinset={posinset}
+      aria-label={entry.name}
       data-id={entry.id}
       tabIndex={tabbable ? 0 : -1}
       draggable
@@ -228,7 +261,11 @@ const TreeRow = memo(function TreeRow({ row, top, height, active, tabbable, drop
       }}
       onContextMenu={(e) => {
         e.preventDefault();
-        openMenu({ items: entryMenu(entry), at: { x: e.clientX, y: e.clientY }, label: entry.name });
+        openMenu({
+          items: entryMenu(entry),
+          at: { x: e.clientX, y: e.clientY },
+          label: entry.name,
+        });
       }}
       onDragStart={(e) => {
         e.dataTransfer.setData(TREE_DRAG_TYPE, entry.id);

@@ -19,10 +19,16 @@ export const markdownHighlight = HighlightStyle.define([
   { tag: [t.meta, t.contentSeparator], class: 'cm-md-meta' },
   // Code inside fences and code files.
   { tag: [t.comment, t.lineComment, t.blockComment], class: 'hljs-comment' },
-  { tag: [t.keyword, t.modifier, t.controlKeyword, t.operatorKeyword, t.definitionKeyword], class: 'hljs-keyword' },
+  {
+    tag: [t.keyword, t.modifier, t.controlKeyword, t.operatorKeyword, t.definitionKeyword],
+    class: 'hljs-keyword',
+  },
   { tag: [t.string, t.special(t.string), t.regexp], class: 'hljs-string' },
   { tag: [t.number, t.bool, t.null, t.atom], class: 'hljs-number' },
-  { tag: [t.function(t.variableName), t.function(t.propertyName), t.className, t.typeName], class: 'hljs-title' },
+  {
+    tag: [t.function(t.variableName), t.function(t.propertyName), t.className, t.typeName],
+    class: 'hljs-title',
+  },
   { tag: [t.propertyName, t.attributeName], class: 'hljs-attr' },
   { tag: [t.tagName], class: 'hljs-keyword' },
 ]);

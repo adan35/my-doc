@@ -13,14 +13,14 @@
   line-height: 1.7;
   overscroll-behavior: contain;
 }
-.cm-content {
+.cm-editor .cm-content {
   padding: 24px 0 40vh;
   caret-color: var(--ink);
   max-width: var(--editor-max, 820px);
   margin: 0 auto;
   width: 100%;
 }
-.cm-line {
+.cm-editor .cm-content .cm-line {
   padding: 0 clamp(16px, 4vw, 48px);
 }
 .cm-gutters {

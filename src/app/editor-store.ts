@@ -85,7 +85,8 @@ export function writeRecoveryDrafts() {
   if (!s) return;
   const drafts: Record<EntryId, { text: string; at: number }> = {};
   for (const b of Object.values(get().buffers)) {
-    if (b.status !== 'loading' && b.text !== b.savedText) drafts[b.id] = { text: b.text, at: Date.now() };
+    if (b.status !== 'loading' && b.text !== b.savedText)
+      drafts[b.id] = { text: b.text, at: Date.now() };
   }
   if (Object.keys(drafts).length) prefs.set(recoveryKey(s.workspace.id), drafts);
   else prefs.remove(recoveryKey(s.workspace.id));
@@ -143,10 +144,14 @@ export const editorActions = {
           error: err instanceof Error ? err.message : 'Unable to save.',
         });
         if (attempt === 1) {
-          toastError('Unable to save this document. Your changes are still here and kept locally.', err, {
-            label: 'Try again',
-            run: () => void editorActions.flush(id),
-          });
+          toastError(
+            'Unable to save this document. Your changes are still here and kept locally.',
+            err,
+            {
+              label: 'Try again',
+              run: () => void editorActions.flush(id),
+            },
+          );
         }
         // Keep retrying with backoff; edits are never dropped.
         scheduleSave(id, Math.min(30_000, 2000 * 2 ** (attempt - 1)));
@@ -165,14 +170,19 @@ export const editorActions = {
   },
 
   hasUnsaved(): boolean {
-    return Object.values(get().buffers).some((b) => b.status !== 'loading' && b.text !== b.savedText);
+    return Object.values(get().buffers).some(
+      (b) => b.status !== 'loading' && b.text !== b.savedText,
+    );
   },
 
   async close(id: EntryId) {
     await editorActions.flush(id);
     const b = get().buffers[id];
     if (b && b.text !== b.savedText) {
-      toast({ message: 'This tab has changes that could not be saved yet, so it stays open.', tone: 'error' });
+      toast({
+        message: 'This tab has changes that could not be saved yet, so it stays open.',
+        tone: 'error',
+      });
       return;
     }
     set((s) => {
@@ -180,8 +190,14 @@ export const editorActions = {
       const tabs = s.tabs.filter((t) => t !== id);
       const buffers = { ...s.buffers };
       delete buffers[id];
-      const activeId = s.activeId === id ? (tabs[Math.min(i, tabs.length - 1)] ?? null) : s.activeId;
-      return { tabs, buffers, activeId, closed: [id, ...s.closed.filter((c) => c !== id)].slice(0, 20) };
+      const activeId =
+        s.activeId === id ? (tabs[Math.min(i, tabs.length - 1)] ?? null) : s.activeId;
+      return {
+        tabs,
+        buffers,
+        activeId,
+        closed: [id, ...s.closed.filter((c) => c !== id)].slice(0, 20),
+      };
     });
     persistTabs();
   },
@@ -223,7 +239,10 @@ export const editorActions = {
     for (const id of Object.keys(get().buffers)) clearTimeout(timers.get(id));
     set({ tabs: [], activeId: null, buffers: {}, closed: [] });
     const tree = s.workspace.tree;
-    const drafts = prefs.get<Record<EntryId, { text: string; at: number }>>(recoveryKey(s.workspace.id), {});
+    const drafts = prefs.get<Record<EntryId, { text: string; at: number }>>(
+      recoveryKey(s.workspace.id),
+      {},
+    );
     let recovered = 0;
     for (const [id, draft] of Object.entries(drafts)) {
       if (!tree.get(id) || typeof draft?.text !== 'string') continue;
@@ -245,12 +264,18 @@ export const editorActions = {
         tone: 'success',
       });
     }
-    const saved = prefs.get<{ tabs: EntryId[]; activeId: EntryId | null }>(tabsKey(s.workspace.id), {
-      tabs: [],
-      activeId: null,
-    });
+    const saved = prefs.get<{ tabs: EntryId[]; activeId: EntryId | null }>(
+      tabsKey(s.workspace.id),
+      {
+        tabs: [],
+        activeId: null,
+      },
+    );
     const live = saved.tabs.filter((id) => tree.get(id)?.kind === 'file' && !tree.isTrashed(id));
-    set({ tabs: live, activeId: live.includes(saved.activeId ?? '') ? saved.activeId : (live[0] ?? null) });
+    set({
+      tabs: live,
+      activeId: live.includes(saved.activeId ?? '') ? saved.activeId : (live[0] ?? null),
+    });
     for (const id of live) {
       const e = tree.get(id)!;
       if (s.workspace.isTextEntry(e) && isTextType(fileTypeOf(e.name))) void loadBuffer(id);
@@ -288,7 +313,8 @@ export const editorActions = {
       return {
         tabs,
         buffers,
-        activeId: s.activeId && gone.includes(s.activeId) ? (tabs[tabs.length - 1] ?? null) : s.activeId,
+        activeId:
+          s.activeId && gone.includes(s.activeId) ? (tabs[tabs.length - 1] ?? null) : s.activeId,
       };
     });
     persistTabs();

@@ -1,4 +1,22 @@
-import { Check, ChevronsUpDown, Clock, FilePlus2, FolderPlus, Hash, Home, PanelLeftClose, Plus, Search, Settings, Star, Trash2, Upload, Keyboard, PencilLine, X } from 'lucide-react';
+import {
+  Check,
+  ChevronsUpDown,
+  Clock,
+  FilePlus2,
+  FolderPlus,
+  Hash,
+  Home,
+  PanelLeftClose,
+  Plus,
+  Search,
+  Settings,
+  Star,
+  Trash2,
+  Upload,
+  Keyboard,
+  PencilLine,
+  X,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useApp } from '@/app/app-store';
 import { useRouter, navigate, type Route } from '@/app/router';
@@ -16,7 +34,10 @@ export function Sidebar({ onClose, drawer }: { onClose?: () => void; drawer?: bo
   const tree = useTree()!;
   const route = useRouter((s) => s.route);
   const trashCount = tree.trashedRoots().length;
-  const favorites = tree.liveEntries().filter((e) => e.favorite).slice(0, 12);
+  const favorites = tree
+    .liveEntries()
+    .filter((e) => e.favorite)
+    .slice(0, 12);
 
   return (
     <nav aria-label="Workspace" className="flex h-full min-h-0 flex-col bg-sidebar text-charcoal">
@@ -27,7 +48,13 @@ export function Sidebar({ onClose, drawer }: { onClose?: () => void; drawer?: bo
             <X size={16} />
           </button>
         ) : (
-          <button type="button" className="icon-btn" aria-label="Collapse sidebar" title={`Collapse sidebar (${formatShortcut(SHORTCUTS.toggleSidebar)})`} onClick={() => useUi.getState().setSidebar(false)}>
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Collapse sidebar"
+            title={`Collapse sidebar (${formatShortcut(SHORTCUTS.toggleSidebar)})`}
+            onClick={() => useUi.getState().setSidebar(false)}
+          >
             <PanelLeftClose size={16} />
           </button>
         )}
@@ -43,11 +70,37 @@ export function Sidebar({ onClose, drawer }: { onClose?: () => void; drawer?: bo
           <span className="flex-1 text-left">Search</span>
           <kbd className="kbd">{formatShortcut(SHORTCUTS.quickOpen)}</kbd>
         </button>
-        <NavItem icon={<Home size={16} />} label="Home" route={{ name: 'home' }} current={route.name === 'home'} />
-        <NavItem icon={<Clock size={16} />} label="Recent" route={{ name: 'recent' }} current={route.name === 'recent'} />
-        <NavItem icon={<Star size={16} />} label="Favorites" route={{ name: 'favorites' }} current={route.name === 'favorites'} />
-        <NavItem icon={<Hash size={16} />} label="Tags" route={{ name: 'tags' }} current={route.name === 'tags'} />
-        <NavItem icon={<Trash2 size={16} />} label="Trash" route={{ name: 'trash' }} current={route.name === 'trash'} badge={trashCount || undefined} />
+        <NavItem
+          icon={<Home size={16} />}
+          label="Home"
+          route={{ name: 'home' }}
+          current={route.name === 'home'}
+        />
+        <NavItem
+          icon={<Clock size={16} />}
+          label="Recent"
+          route={{ name: 'recent' }}
+          current={route.name === 'recent'}
+        />
+        <NavItem
+          icon={<Star size={16} />}
+          label="Favorites"
+          route={{ name: 'favorites' }}
+          current={route.name === 'favorites'}
+        />
+        <NavItem
+          icon={<Hash size={16} />}
+          label="Tags"
+          route={{ name: 'tags' }}
+          current={route.name === 'tags'}
+        />
+        <NavItem
+          icon={<Trash2 size={16} />}
+          label="Trash"
+          route={{ name: 'trash' }}
+          current={route.name === 'trash'}
+          badge={trashCount || undefined}
+        />
       </div>
 
       {favorites.length > 0 && (
@@ -69,32 +122,75 @@ export function Sidebar({ onClose, drawer }: { onClose?: () => void; drawer?: bo
       )}
 
       <div className="flex items-center gap-0.5 px-2 pt-1 pb-1">
-        <button type="button" className="section-label flex-1 rounded px-2 py-1 text-left hover:text-steel" onClick={() => navigate({ name: 'folder', id: null })}>
+        <button
+          type="button"
+          className="section-label flex-1 rounded px-2 py-1 text-left hover:text-steel"
+          onClick={() => navigate({ name: 'folder', id: null })}
+        >
           Files
         </button>
-        <button type="button" className="icon-btn !h-6 !w-6" aria-label="Import" title="Import files or folders" onClick={(e) => openMenuAt(e.currentTarget, importSubmenu(null), 'Import')}>
+        <button
+          type="button"
+          className="icon-btn !h-6 !w-6"
+          aria-label="Import"
+          title="Import files or folders"
+          onClick={(e) => openMenuAt(e.currentTarget, importSubmenu(null), 'Import')}
+        >
           <Upload size={14} />
         </button>
-        <button type="button" className="icon-btn !h-6 !w-6" aria-label="New folder" title={`New folder (${formatShortcut(SHORTCUTS.newFolder)})`} onClick={() => void A.newFolder(null)}>
+        <button
+          type="button"
+          className="icon-btn !h-6 !w-6"
+          aria-label="New folder"
+          title={`New folder (${formatShortcut(SHORTCUTS.newFolder)})`}
+          onClick={() => void A.newFolder(null)}
+        >
           <FolderPlus size={14} />
         </button>
-        <button type="button" className="icon-btn !h-6 !w-6" aria-label="New document" title={`New document (${formatShortcut(SHORTCUTS.newDoc)})`} onClick={() => void A.newDocument(null)}>
+        <button
+          type="button"
+          className="icon-btn !h-6 !w-6"
+          aria-label="New document"
+          title={`New document (${formatShortcut(SHORTCUTS.newDoc)})`}
+          onClick={() => void A.newDocument(null)}
+        >
           <Plus size={15} />
         </button>
       </div>
       <FileTree />
 
       <div className="border-t border-hairline px-2 py-2">
-        <button type="button" className="btn btn-ghost h-8 w-full justify-start gap-2 px-2 font-normal" onClick={() => void A.newDocument()}>
+        <button
+          type="button"
+          className="btn btn-ghost h-8 w-full justify-start gap-2 px-2 font-normal"
+          onClick={() => void A.newDocument()}
+        >
           <FilePlus2 size={16} className="text-steel" aria-hidden /> New document
         </button>
-        <NavItem icon={<Settings size={16} />} label="Settings" route={{ name: 'settings' }} current={route.name === 'settings'} />
+        <NavItem
+          icon={<Settings size={16} />}
+          label="Settings"
+          route={{ name: 'settings' }}
+          current={route.name === 'settings'}
+        />
       </div>
     </nav>
   );
 }
 
-function NavItem({ icon, label, route, current, badge }: { icon: ReactNode; label: string; route: Route; current: boolean; badge?: number }) {
+function NavItem({
+  icon,
+  label,
+  route,
+  current,
+  badge,
+}: {
+  icon: ReactNode;
+  label: string;
+  route: Route;
+  current: boolean;
+  badge?: number;
+}) {
   return (
     <button
       type="button"
@@ -138,7 +234,10 @@ function WorkspaceSwitcher() {
       aria-label={`Workspace: ${current?.name}. Switch workspace`}
       onClick={(e) => openMenuAt(e.currentTarget, items, 'Workspaces')}
     >
-      <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-ink text-[12px] font-semibold text-canvas" aria-hidden>
+      <span
+        className="flex size-6 shrink-0 items-center justify-center rounded-md bg-ink text-[12px] font-semibold text-canvas"
+        aria-hidden
+      >
         {current?.name.trim().charAt(0).toUpperCase() || 'M'}
       </span>
       <span className="truncate text-[14px] font-semibold text-ink">{current?.name}</span>

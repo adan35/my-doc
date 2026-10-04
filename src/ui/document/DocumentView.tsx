@@ -1,6 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  BookOpen, Columns2, Copy, Download, Eye, FolderInput, History, Maximize2, MoreHorizontal, PanelRight, PencilLine, Search, Star, Tag, Trash2, ArrowLeft, Minimize2, Focus, ChevronRight, FileQuestion,
+  BookOpen,
+  Columns2,
+  Copy,
+  Download,
+  Eye,
+  FolderInput,
+  History,
+  Maximize2,
+  MoreHorizontal,
+  PanelRight,
+  PencilLine,
+  Search,
+  Star,
+  Tag,
+  Trash2,
+  ArrowLeft,
+  Minimize2,
+  Focus,
+  ChevronRight,
+  FileQuestion,
 } from 'lucide-react';
 import type { Entry, EntryId } from '@/domain/types';
 import { fileTypeOf, isMarkdownName, isTextType } from '@/domain/names';
@@ -42,7 +61,9 @@ export function DocumentView({ id, anchor }: { id: EntryId; anchor?: string }) {
     return null;
   }
   const textual = ws().isTextEntry(entry) && isTextType(fileTypeOf(entry.name));
-  return textual ? <TextDocument entry={entry} anchor={anchor} /> : (
+  return textual ? (
+    <TextDocument entry={entry} anchor={anchor} />
+  ) : (
     <div className="flex h-full min-h-0 flex-col">
       <DocHeader entry={entry} mode="edit" setMode={() => {}} />
       <div className="min-h-0 flex-1">
@@ -56,15 +77,29 @@ function MissingDocument({ trashed }: { trashed: boolean }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
       <FileQuestion size={32} className="text-stone" aria-hidden />
-      <h2 className="text-[16px] font-semibold text-ink">{trashed ? 'This document is in the Trash' : 'This document no longer exists'}</h2>
-      <p className="max-w-sm text-caption text-steel">{trashed ? 'Restore it from the Trash to open it again.' : 'It may have been deleted, or the link is out of date.'}</p>
+      <h2 className="text-[16px] font-semibold text-ink">
+        {trashed ? 'This document is in the Trash' : 'This document no longer exists'}
+      </h2>
+      <p className="max-w-sm text-caption text-steel">
+        {trashed
+          ? 'Restore it from the Trash to open it again.'
+          : 'It may have been deleted, or the link is out of date.'}
+      </p>
       <div className="flex gap-2">
         {trashed && (
-          <button type="button" className="btn btn-primary" onClick={() => navigate({ name: 'trash' })}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => navigate({ name: 'trash' })}
+          >
             Open Trash
           </button>
         )}
-        <button type="button" className="btn btn-secondary" onClick={() => navigate({ name: 'home' })}>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => navigate({ name: 'home' })}
+        >
           Go home
         </button>
       </div>
@@ -143,7 +178,11 @@ function TextDocument({ entry, anchor }: { entry: Entry; anchor?: string }) {
     return (
       <div className="flex h-full flex-col">
         <DocHeader entry={entry} mode={mode} setMode={setMode} />
-        <div className="mx-auto w-full max-w-[760px] space-y-3 px-6 py-10" aria-busy="true" aria-label="Loading document">
+        <div
+          className="mx-auto w-full max-w-[760px] space-y-3 px-6 py-10"
+          aria-busy="true"
+          aria-label="Loading document"
+        >
           <div className="skeleton h-8 w-2/3" />
           <div className="skeleton h-4 w-full" />
           <div className="skeleton h-4 w-5/6" />
@@ -164,12 +203,23 @@ function TextDocument({ entry, anchor }: { entry: Entry; anchor?: string }) {
   const preview = (
     <div
       className="scroll-area h-full min-w-0 flex-1 print-source"
-      onScroll={readingMode ? (e) => {
-        const el = e.currentTarget;
-        setProgress(el.scrollHeight > el.clientHeight ? el.scrollTop / (el.scrollHeight - el.clientHeight) : 1);
-      } : undefined}
+      onScroll={
+        readingMode
+          ? (e) => {
+              const el = e.currentTarget;
+              setProgress(
+                el.scrollHeight > el.clientHeight
+                  ? el.scrollTop / (el.scrollHeight - el.clientHeight)
+                  : 1,
+              );
+            }
+          : undefined
+      }
     >
-      <div className="mx-auto px-5 pt-8 pb-[30vh] sm:px-10 sm:pt-12" style={{ maxWidth: widthPx + 80 }}>
+      <div
+        className="mx-auto px-5 pt-8 pb-[30vh] sm:px-10 sm:pt-12"
+        style={{ maxWidth: widthPx + 80 }}
+      >
         <Preview
           ref={previewRef}
           docId={id}
@@ -188,13 +238,23 @@ function TextDocument({ entry, anchor }: { entry: Entry; anchor?: string }) {
       <div className="flex min-w-0 flex-1 flex-col">
         {readingMode && (
           <div className="h-0.5 w-full bg-transparent" aria-hidden>
-            <div className="h-full bg-primary transition-[width] duration-75" style={{ width: `${progress * 100}%` }} />
+            <div
+              className="h-full bg-primary transition-[width] duration-75"
+              style={{ width: `${progress * 100}%` }}
+            />
           </div>
         )}
-        <DocHeader entry={entry} mode={mode} setMode={setMode} onOutline={() => setOutlineSheet(true)} />
+        <DocHeader
+          entry={entry}
+          mode={mode}
+          setMode={setMode}
+          onOutline={() => setOutlineSheet(true)}
+        />
         <div className="flex min-h-0 flex-1" style={editorStyle}>
           {mode !== 'preview' && (
-            <div className={`h-full min-w-0 flex-1 ${mode === 'split' ? 'border-r border-hairline' : ''}`}>
+            <div
+              className={`h-full min-w-0 flex-1 ${mode === 'split' ? 'border-r border-hairline' : ''}`}
+            >
               <Editor
                 ref={editorRef}
                 docId={id}
@@ -215,7 +275,13 @@ function TextDocument({ entry, anchor }: { entry: Entry; anchor?: string }) {
       </div>
       {showPanel && (
         <div className="w-[272px] shrink-0 border-l border-hairline no-print">
-          <RightPanel docId={id} text={text} activeLine={activeLine} onJump={jumpTo} onClose={() => useUi.getState().setRightPanel(false)} />
+          <RightPanel
+            docId={id}
+            text={text}
+            activeLine={activeLine}
+            onJump={jumpTo}
+            onClose={() => useUi.getState().setRightPanel(false)}
+          />
         </div>
       )}
       {outlineSheet && (
@@ -236,7 +302,13 @@ function OutlineSheet({ children, onClose }: { children: React.ReactNode; onClos
   return (
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
       <div className="absolute inset-0 bg-[var(--scrim)]" aria-hidden />
-      <div role="dialog" aria-label="Outline" aria-modal="true" className="animate-in safe-bottom relative h-full w-[min(320px,85vw)] overflow-y-auto bg-canvas p-3 shadow-3" onClick={(e) => e.stopPropagation()}>
+      <div
+        role="dialog"
+        aria-label="Outline"
+        aria-modal="true"
+        className="animate-in safe-bottom relative h-full w-[min(320px,85vw)] overflow-y-auto bg-canvas p-3 shadow-3"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2 className="section-label mb-2 px-1">Outline</h2>
         {children}
       </div>
@@ -244,8 +316,17 @@ function OutlineSheet({ children, onClose }: { children: React.ReactNode; onClos
   );
 }
 
-
-function DocHeader({ entry, mode, setMode, onOutline }: { entry: Entry; mode: ViewMode; setMode(m: ViewMode): void; onOutline?: () => void }) {
+function DocHeader({
+  entry,
+  mode,
+  setMode,
+  onOutline,
+}: {
+  entry: Entry;
+  mode: ViewMode;
+  setMode(m: ViewMode): void;
+  onOutline?: () => void;
+}) {
   const tree = useTree()!;
   const { phone, wide, desktop } = useLayout();
   const focusMode = useUi((s) => s.focusMode);
@@ -262,27 +343,63 @@ function DocHeader({ entry, mode, setMode, onOutline }: { entry: Entry; mode: Vi
     ...(isMd
       ? ([
           { label: 'Add tag…', icon: <Tag />, onSelect: () => void A.addTagTo(entry.id) },
-          { label: 'Version history', icon: <History />, onSelect: () => void dialogs.history(entry.id) },
+          {
+            label: 'Version history',
+            icon: <History />,
+            onSelect: () => void dialogs.history(entry.id),
+          },
         ] as MenuEntry[])
       : []),
-    ...(textual ? ([{ label: 'Find and replace', icon: <Search />, shortcut: SHORTCUTS.find, onSelect: () => sendDocCommand('find') }] as MenuEntry[]) : []),
+    ...(textual
+      ? ([
+          {
+            label: 'Find and replace',
+            icon: <Search />,
+            shortcut: SHORTCUTS.find,
+            onSelect: () => sendDocCommand('find'),
+          },
+        ] as MenuEntry[])
+      : []),
     { label: 'Export', icon: <Download />, submenu: exportSubmenu(entry) },
     'separator',
     ...(textual
       ? ([
-          { label: focusMode ? 'Exit focus mode' : 'Focus mode', icon: <Focus />, shortcut: SHORTCUTS.focusMode, onSelect: () => useUi.getState().setFocusMode(!focusMode) },
-          ...(isMd ? [{ label: readingMode ? 'Exit reading mode' : 'Reading mode', icon: <BookOpen />, shortcut: SHORTCUTS.readingMode, onSelect: () => useUi.getState().setReadingMode(!readingMode) }] : []),
+          {
+            label: focusMode ? 'Exit focus mode' : 'Focus mode',
+            icon: <Focus />,
+            shortcut: SHORTCUTS.focusMode,
+            onSelect: () => useUi.getState().setFocusMode(!focusMode),
+          },
+          ...(isMd
+            ? [
+                {
+                  label: readingMode ? 'Exit reading mode' : 'Reading mode',
+                  icon: <BookOpen />,
+                  shortcut: SHORTCUTS.readingMode,
+                  onSelect: () => useUi.getState().setReadingMode(!readingMode),
+                },
+              ]
+            : []),
           'separator',
         ] as MenuEntry[])
       : []),
-    { label: 'Move to Trash', icon: <Trash2 />, danger: true, onSelect: () => void A.trashEntries([entry.id]) },
+    {
+      label: 'Move to Trash',
+      icon: <Trash2 />,
+      danger: true,
+      onSelect: () => void A.trashEntries([entry.id]),
+    },
   ];
 
   if (focusMode) {
     return (
       <div className="flex h-11 shrink-0 items-center justify-end gap-2 px-3 no-print">
         <SaveStatus id={entry.id} />
-        <button type="button" className="btn btn-ghost h-8 text-steel" onClick={() => useUi.getState().setFocusMode(false)}>
+        <button
+          type="button"
+          className="btn btn-ghost h-8 text-steel"
+          onClick={() => useUi.getState().setFocusMode(false)}
+        >
           <Minimize2 size={15} aria-hidden /> Exit focus
         </button>
       </div>
@@ -292,12 +409,21 @@ function DocHeader({ entry, mode, setMode, onOutline }: { entry: Entry; mode: Vi
   return (
     <header className="flex h-12 shrink-0 items-center gap-1 px-2 sm:px-3 no-print">
       {phone && (
-        <button type="button" className="icon-btn" aria-label="Back" onClick={() => history.length > 1 ? history.back() : navigate({ name: 'home' })}>
+        <button
+          type="button"
+          className="icon-btn"
+          aria-label="Back"
+          onClick={() => (history.length > 1 ? history.back() : navigate({ name: 'home' }))}
+        >
           <ArrowLeft size={18} />
         </button>
       )}
       {readingMode && (
-        <button type="button" className="btn btn-ghost h-8 text-steel" onClick={() => useUi.getState().setReadingMode(false)}>
+        <button
+          type="button"
+          className="btn btn-ghost h-8 text-steel"
+          onClick={() => useUi.getState().setReadingMode(false)}
+        >
           <ArrowLeft size={15} aria-hidden /> Exit reading
         </button>
       )}
@@ -305,7 +431,11 @@ function DocHeader({ entry, mode, setMode, onOutline }: { entry: Entry; mode: Vi
         {!phone &&
           ancestors.slice(-3).map((a) => (
             <span key={a.id} className="flex min-w-0 shrink items-center gap-0.5">
-              <button type="button" className="max-w-[160px] truncate rounded px-1.5 py-0.5 text-steel hover:bg-hover hover:text-ink" onClick={() => navigate({ name: 'folder', id: a.id })}>
+              <button
+                type="button"
+                className="max-w-[160px] truncate rounded px-1.5 py-0.5 text-steel hover:bg-hover hover:text-ink"
+                onClick={() => navigate({ name: 'folder', id: a.id })}
+              >
                 {a.name}
               </button>
               <ChevronRight size={13} className="shrink-0 text-muted" aria-hidden />
@@ -322,34 +452,96 @@ function DocHeader({ entry, mode, setMode, onOutline }: { entry: Entry; mode: Vi
       </nav>
       {textual && <SaveStatus id={entry.id} />}
       {isMd && !readingMode && (
-        <div role="group" aria-label="View mode" className="ml-1 flex items-center rounded-md bg-surface p-0.5">
-          <ModeButton label="Edit" active={mode === 'edit'} onClick={() => setMode('edit')} icon={<PencilLine size={14} />} shortcut={SHORTCUTS.toggleMode} />
-          {desktop && <ModeButton label="Split" active={mode === 'split'} onClick={() => setMode('split')} icon={<Columns2 size={14} />} shortcut={SHORTCUTS.splitView} />}
-          <ModeButton label="Preview" active={mode === 'preview'} onClick={() => setMode('preview')} icon={<Eye size={14} />} shortcut={SHORTCUTS.toggleMode} />
+        <div
+          role="group"
+          aria-label="View mode"
+          className="ml-1 flex items-center rounded-md bg-surface p-0.5"
+        >
+          <ModeButton
+            label="Edit"
+            active={mode === 'edit'}
+            onClick={() => setMode('edit')}
+            icon={<PencilLine size={14} />}
+            shortcut={SHORTCUTS.toggleMode}
+          />
+          {desktop && (
+            <ModeButton
+              label="Split"
+              active={mode === 'split'}
+              onClick={() => setMode('split')}
+              icon={<Columns2 size={14} />}
+              shortcut={SHORTCUTS.splitView}
+            />
+          )}
+          <ModeButton
+            label="Preview"
+            active={mode === 'preview'}
+            onClick={() => setMode('preview')}
+            icon={<Eye size={14} />}
+            shortcut={SHORTCUTS.toggleMode}
+          />
         </div>
       )}
-      <button type="button" className="icon-btn" aria-pressed={!!entry.favorite} aria-label={entry.favorite ? 'Remove from favorites' : 'Add to favorites'} title={entry.favorite ? 'Remove from favorites' : 'Add to favorites'} onClick={() => void A.toggleFavorite(entry.id)}>
+      <button
+        type="button"
+        className="icon-btn"
+        aria-pressed={!!entry.favorite}
+        aria-label={entry.favorite ? 'Remove from favorites' : 'Add to favorites'}
+        title={entry.favorite ? 'Remove from favorites' : 'Add to favorites'}
+        onClick={() => void A.toggleFavorite(entry.id)}
+      >
         <Star size={16} className={entry.favorite ? 'fill-[#f5c84c] text-[#e0a800]' : ''} />
       </button>
       {readingMode && <FullscreenButton />}
       {isMd && !wide && onOutline && (
-        <button type="button" className="icon-btn" aria-label="Outline" title="Outline" onClick={onOutline}>
+        <button
+          type="button"
+          className="icon-btn"
+          aria-label="Outline"
+          title="Outline"
+          onClick={onOutline}
+        >
           <PanelRight size={16} />
         </button>
       )}
       {isMd && wide && !readingMode && (
-        <button type="button" className="icon-btn" aria-pressed={panelOpen} aria-label="Toggle side panel" title={`Side panel (${formatShortcut(SHORTCUTS.togglePanel)})`} onClick={() => useUi.getState().setRightPanel(!panelOpen)}>
+        <button
+          type="button"
+          className="icon-btn"
+          aria-pressed={panelOpen}
+          aria-label="Toggle side panel"
+          title={`Side panel (${formatShortcut(SHORTCUTS.togglePanel)})`}
+          onClick={() => useUi.getState().setRightPanel(!panelOpen)}
+        >
           <PanelRight size={16} />
         </button>
       )}
-      <button type="button" className="icon-btn" aria-label="More actions" title="More actions" onClick={(e) => openMenuAt(e.currentTarget, menu, entry.name)}>
+      <button
+        type="button"
+        className="icon-btn"
+        aria-label="More actions"
+        title="More actions"
+        onClick={(e) => openMenuAt(e.currentTarget, menu, entry.name)}
+      >
         <MoreHorizontal size={16} />
       </button>
     </header>
   );
 }
 
-function ModeButton({ label, active, onClick, icon, shortcut }: { label: string; active: boolean; onClick(): void; icon: React.ReactNode; shortcut: string }) {
+function ModeButton({
+  label,
+  active,
+  onClick,
+  icon,
+  shortcut,
+}: {
+  label: string;
+  active: boolean;
+  onClick(): void;
+  icon: React.ReactNode;
+  shortcut: string;
+}) {
   return (
     <button
       type="button"
@@ -378,7 +570,9 @@ function FullscreenButton() {
       type="button"
       className="icon-btn"
       aria-label={full ? 'Exit full screen' : 'Full screen'}
-      onClick={() => (full ? void document.exitFullscreen() : void document.documentElement.requestFullscreen())}
+      onClick={() =>
+        full ? void document.exitFullscreen() : void document.documentElement.requestFullscreen()
+      }
     >
       {full ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
     </button>

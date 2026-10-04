@@ -11,7 +11,12 @@ function inTextField(target: EventTarget | null) {
   const el = target as HTMLElement | null;
   if (!el) return false;
   if (el.closest('.cm-editor')) return true;
-  return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable;
+  return (
+    el.tagName === 'INPUT' ||
+    el.tagName === 'TEXTAREA' ||
+    el.tagName === 'SELECT' ||
+    el.isContentEditable
+  );
 }
 
 /** App-wide keyboard shortcuts. Editor-specific ones live in the editor keymap. */
@@ -28,12 +33,19 @@ export function useGlobalShortcuts() {
         fn();
       };
       // Mod+N works in installed/desktop contexts where the browser doesn't reserve it.
-      if (m(SHORTCUTS.palette)) return run(() => ui.setOverlay(ui.overlay === 'palette' ? null : 'palette'));
-      if (m(SHORTCUTS.quickOpen)) return run(() => ui.setOverlay(ui.overlay === 'quickopen' ? null : 'quickopen'));
+      if (m(SHORTCUTS.palette))
+        return run(() => ui.setOverlay(ui.overlay === 'palette' ? null : 'palette'));
+      if (m(SHORTCUTS.quickOpen))
+        return run(() => ui.setOverlay(ui.overlay === 'quickopen' ? null : 'quickopen'));
       if (m(SHORTCUTS.search)) return run(() => navigate({ name: 'search', q: '' }));
       if (m(SHORTCUTS.newDoc) || m('Mod+N')) return run(() => void A.newDocument());
       if (m(SHORTCUTS.newFolder)) return run(() => void A.newFolder());
-      if (m(SHORTCUTS.toggleSidebar)) return run(() => (matchMedia('(max-width: 1099px)').matches ? ui.setDrawer(!ui.drawerOpen) : ui.setSidebar(!ui.sidebarOpen)));
+      if (m(SHORTCUTS.toggleSidebar))
+        return run(() =>
+          matchMedia('(max-width: 1099px)').matches
+            ? ui.setDrawer(!ui.drawerOpen)
+            : ui.setSidebar(!ui.sidebarOpen),
+        );
       if (m(SHORTCUTS.togglePanel)) return run(() => ui.setRightPanel(!ui.rightPanelOpen));
       if (m(SHORTCUTS.reopenTab)) return run(() => void reopenClosedTab());
       if (m(SHORTCUTS.save)) {
@@ -48,11 +60,12 @@ export function useGlobalShortcuts() {
         if (m(SHORTCUTS.closeTab)) {
           const id = useEditor.getState().activeId;
           if (id)
-            return run(() =>
-              void editorActions.close(id).then(() => {
-                const next = useEditor.getState().activeId;
-                navigate(next ? { name: 'doc', id: next } : { name: 'home' }, { replace: true });
-              }),
+            return run(
+              () =>
+                void editorActions.close(id).then(() => {
+                  const next = useEditor.getState().activeId;
+                  navigate(next ? { name: 'doc', id: next } : { name: 'home' }, { replace: true });
+                }),
             );
         }
         if (m(SHORTCUTS.nextTab) || m('Ctrl+Shift+Tab')) {
@@ -68,7 +81,8 @@ export function useGlobalShortcuts() {
       if (e.key === 'Escape' && !e.defaultPrevented) {
         if (ui.overlay) return run(() => ui.setOverlay(null));
         if (ui.focusMode || ui.readingMode) {
-          if (!inTextField(e.target) || ui.readingMode) return run(() => (ui.setFocusMode(false), ui.setReadingMode(false)));
+          if (!inTextField(e.target) || ui.readingMode)
+            return run(() => (ui.setFocusMode(false), ui.setReadingMode(false)));
         }
       }
     };

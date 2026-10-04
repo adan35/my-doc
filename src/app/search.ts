@@ -135,14 +135,21 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** Builds a short excerpt around the first match with highlight ranges. */
 export function makeSnippet(content: string, terms: string[], radius = 70): Snippet | undefined {
   if (!terms.length) return undefined;
-  const re = new RegExp(terms.map(escapeRe).sort((a, b) => b.length - a.length).join('|'), 'giu');
+  const re = new RegExp(
+    terms
+      .map(escapeRe)
+      .sort((a, b) => b.length - a.length)
+      .join('|'),
+    'giu',
+  );
   const first = re.exec(content);
   if (!first) return undefined;
   let start = Math.max(0, first.index - radius);
   let end = Math.min(content.length, first.index + first[0].length + radius * 2);
   // Snap to word boundaries.
   if (start > 0) start = content.indexOf(' ', start) + 1 || start;
-  if (end < content.length) end = content.lastIndexOf(' ', end) > first.index ? content.lastIndexOf(' ', end) : end;
+  if (end < content.length)
+    end = content.lastIndexOf(' ', end) > first.index ? content.lastIndexOf(' ', end) : end;
   const raw = content.slice(start, end);
   // Collapse whitespace while tracking offsets.
   let text = '';

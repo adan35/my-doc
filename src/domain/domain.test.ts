@@ -8,8 +8,21 @@ import { Tree, sortEntries } from './tree';
 import type { Entry } from './types';
 import { expandTemplate } from './templates';
 
-const entry = (id: string, parentId: string | null, name: string, kind: 'file' | 'folder' = 'file', extra: Partial<Entry> = {}): Entry => ({
-  id, parentId, name, kind, createdAt: 1, updatedAt: 1, size: 0, ...extra,
+const entry = (
+  id: string,
+  parentId: string | null,
+  name: string,
+  kind: 'file' | 'folder' = 'file',
+  extra: Partial<Entry> = {},
+): Entry => ({
+  id,
+  parentId,
+  name,
+  kind,
+  createdAt: 1,
+  updatedAt: 1,
+  size: 0,
+  ...extra,
 });
 
 describe('names', () => {
@@ -81,7 +94,9 @@ describe('tags', () => {
 
 describe('outline', () => {
   it('extracts headings with unique slugs and lines', () => {
-    const h = extractHeadings('# Intro\n\n## Setup\n\n```\n# not heading\n```\n\n## Setup\n\nTitle\n=====\n');
+    const h = extractHeadings(
+      '# Intro\n\n## Setup\n\n```\n# not heading\n```\n\n## Setup\n\nTitle\n=====\n',
+    );
     expect(h.map((x) => [x.level, x.text, x.slug, x.line])).toEqual([
       [1, 'Intro', 'intro', 0],
       [2, 'Setup', 'setup', 2],
@@ -93,7 +108,9 @@ describe('outline', () => {
 
 describe('links', () => {
   it('extracts internal links only', () => {
-    const links = extractLinks('[a](./a.md) [b](https://x.com) ![i](img/p.png) [[Wiki Page|alias]] [c](<my file.md#sec>) `[d](d.md)`');
+    const links = extractLinks(
+      '[a](./a.md) [b](https://x.com) ![i](img/p.png) [[Wiki Page|alias]] [c](<my file.md#sec>) `[d](d.md)`',
+    );
     expect(links.map((l) => [l.kind, l.target, l.fragment])).toEqual([
       ['markdown', './a.md', undefined],
       ['image', 'img/p.png', undefined],
@@ -102,7 +119,9 @@ describe('links', () => {
     ]);
   });
   it('rewrites link targets in place', () => {
-    const out = rewriteLinks('see [a](./a.md#x) and [[A]]', (l) => (l.kind === 'markdown' ? '../b/a.md' : 'B'));
+    const out = rewriteLinks('see [a](./a.md#x) and [[A]]', (l) =>
+      l.kind === 'markdown' ? '../b/a.md' : 'B',
+    );
     expect(out).toBe('see [a](../b/a.md#x) and [[B]]');
   });
 });
@@ -134,13 +153,23 @@ describe('tree', () => {
     expect(tree.canMove('d1', 't1')).toBe(false);
   });
   it('sorts with folders first', () => {
-    const sorted = sortEntries([entry('a', null, 'b.md', 'file', { size: 5 }), entry('b', null, 'Z', 'folder'), entry('c', null, 'a.md', 'file', { size: 9 })], 'size', 'desc');
+    const sorted = sortEntries(
+      [
+        entry('a', null, 'b.md', 'file', { size: 5 }),
+        entry('b', null, 'Z', 'folder'),
+        entry('c', null, 'a.md', 'file', { size: 9 }),
+      ],
+      'size',
+      'desc',
+    );
     expect(sorted.map((e) => e.name)).toEqual(['Z', 'a.md', 'b.md']);
   });
 });
 
 describe('templates', () => {
   it('expands variables', () => {
-    expect(expandTemplate('# {{title}} {{ date }}', { title: 'X', date: '2024-01-01' })).toBe('# X 2024-01-01');
+    expect(expandTemplate('# {{title}} {{ date }}', { title: 'X', date: '2024-01-01' })).toBe(
+      '# X 2024-01-01',
+    );
   });
 });

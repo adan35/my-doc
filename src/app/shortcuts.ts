@@ -79,7 +79,8 @@ export function matches(e: KeyboardEvent, shortcut: string, isMac: boolean): boo
   if (e.ctrlKey !== wantCtrl || e.metaKey !== wantMeta) return false;
   if (e.altKey !== parts.includes('Alt') || e.shiftKey !== parts.includes('Shift')) return false;
   const code = e.code.toLowerCase();
-  if (key.length === 1 && /[a-z0-9]/.test(key)) return code === `key${key}` || code === `digit${key}`;
+  if (key.length === 1 && /[a-z0-9]/.test(key))
+    return code === `key${key}` || code === `digit${key}`;
   if (key === '\\') return code === 'backslash';
   if (key === '.') return code === 'period';
   if (key === 'tab') return e.key === 'Tab';

@@ -12,15 +12,48 @@ export function MobileNav() {
   const route = useRouter((s) => s.route);
   const activeId = useEditor((s) => s.activeId);
   const items = [
-    { label: 'Home', icon: <Home size={20} />, active: route.name === 'home', onClick: () => navigate({ name: 'home' }) },
-    { label: 'Files', icon: <FolderOpen size={20} />, active: route.name === 'folder', onClick: () => navigate({ name: 'folder', id: null }) },
-    { label: 'Search', icon: <Search size={20} />, active: route.name === 'search', onClick: () => navigate({ name: 'search', q: '' }) },
-    ...(activeId ? [{ label: 'Editor', icon: <FileText size={20} />, active: route.name === 'doc', onClick: () => void A.openEntry(activeId) }] : []),
+    {
+      label: 'Home',
+      icon: <Home size={20} />,
+      active: route.name === 'home',
+      onClick: () => navigate({ name: 'home' }),
+    },
+    {
+      label: 'Files',
+      icon: <FolderOpen size={20} />,
+      active: route.name === 'folder',
+      onClick: () => navigate({ name: 'folder', id: null }),
+    },
+    {
+      label: 'Search',
+      icon: <Search size={20} />,
+      active: route.name === 'search',
+      onClick: () => navigate({ name: 'search', q: '' }),
+    },
+    ...(activeId
+      ? [
+          {
+            label: 'Editor',
+            icon: <FileText size={20} />,
+            active: route.name === 'doc',
+            onClick: () => void A.openEntry(activeId),
+          },
+        ]
+      : []),
   ];
   return (
-    <nav aria-label="Main" className="safe-bottom flex shrink-0 border-t border-hairline bg-canvas no-print">
+    <nav
+      aria-label="Main"
+      className="safe-bottom flex shrink-0 border-t border-hairline bg-canvas no-print"
+    >
       {items.map((it) => (
-        <button key={it.label} type="button" aria-current={it.active ? 'page' : undefined} className={`flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium ${it.active ? 'text-ink' : 'text-stone'}`} onClick={it.onClick}>
+        <button
+          key={it.label}
+          type="button"
+          aria-current={it.active ? 'page' : undefined}
+          className={`flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium ${it.active ? 'text-ink' : 'text-stone'}`}
+          onClick={it.onClick}
+        >
           {it.icon}
           {it.label}
         </button>
@@ -29,18 +62,34 @@ export function MobileNav() {
         type="button"
         className="flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-stone"
         onClick={(e) =>
-          openMenuAt(e.currentTarget, [
-            { label: 'New document', icon: <FilePlus2 />, onSelect: () => void A.newDocument() },
-            { label: 'New folder', icon: <FolderPlus />, onSelect: () => void A.newFolder() },
-            { label: 'Import', icon: <Upload />, submenu: importSubmenu(null) },
-            'separator',
-            { label: 'Recent', icon: <Clock />, onSelect: () => navigate({ name: 'recent' }) },
-            { label: 'Favorites', icon: <Star />, onSelect: () => navigate({ name: 'favorites' }) },
-            { label: 'Tags', icon: <Hash />, onSelect: () => navigate({ name: 'tags' }) },
-            { label: 'Trash', icon: <Trash2 />, onSelect: () => navigate({ name: 'trash' }) },
-            { label: 'Settings', icon: <Settings />, onSelect: () => navigate({ name: 'settings' }) },
-            { label: 'Switch workspace…', icon: <Home />, onSelect: () => useUi.getState().setDrawer(true) },
-          ], 'More')
+          openMenuAt(
+            e.currentTarget,
+            [
+              { label: 'New document', icon: <FilePlus2 />, onSelect: () => void A.newDocument() },
+              { label: 'New folder', icon: <FolderPlus />, onSelect: () => void A.newFolder() },
+              { label: 'Import', icon: <Upload />, submenu: importSubmenu(null) },
+              'separator',
+              { label: 'Recent', icon: <Clock />, onSelect: () => navigate({ name: 'recent' }) },
+              {
+                label: 'Favorites',
+                icon: <Star />,
+                onSelect: () => navigate({ name: 'favorites' }),
+              },
+              { label: 'Tags', icon: <Hash />, onSelect: () => navigate({ name: 'tags' }) },
+              { label: 'Trash', icon: <Trash2 />, onSelect: () => navigate({ name: 'trash' }) },
+              {
+                label: 'Settings',
+                icon: <Settings />,
+                onSelect: () => navigate({ name: 'settings' }),
+              },
+              {
+                label: 'Switch workspace…',
+                icon: <Home />,
+                onSelect: () => useUi.getState().setDrawer(true),
+              },
+            ],
+            'More',
+          )
         }
       >
         <MoreHorizontal size={20} />

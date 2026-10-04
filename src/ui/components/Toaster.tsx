@@ -27,11 +27,17 @@ function ToastItem({ toast }: { toast: Toast }) {
       role={toast.tone === 'error' ? 'alert' : 'status'}
       className="popover animate-in pointer-events-auto flex w-full max-w-[420px] items-start gap-3 bg-ink py-2.5 pr-2 pl-3.5 text-[14px] text-canvas"
     >
-      {toast.tone === 'error' && <AlertCircle size={16} className="mt-0.5 shrink-0 text-[#ff8a80]" aria-hidden />}
-      {toast.tone === 'success' && <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#6fdc8c]" aria-hidden />}
+      {toast.tone === 'error' && (
+        <AlertCircle size={16} className="mt-0.5 shrink-0 text-[#ff8a80]" aria-hidden />
+      )}
+      {toast.tone === 'success' && (
+        <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#6fdc8c]" aria-hidden />
+      )}
       <div className="min-w-0 flex-1 py-0.5">
         <p className="leading-snug">{toast.message}</p>
-        {toast.detail && <p className="mt-0.5 text-caption leading-snug break-words opacity-70">{toast.detail}</p>}
+        {toast.detail && (
+          <p className="mt-0.5 text-caption leading-snug break-words opacity-70">{toast.detail}</p>
+        )}
       </div>
       {toast.action && (
         <button
@@ -45,7 +51,12 @@ function ToastItem({ toast }: { toast: Toast }) {
           {toast.action.label}
         </button>
       )}
-      <button type="button" aria-label="Dismiss" className="flex size-7 shrink-0 items-center justify-center rounded-md opacity-60 hover:bg-white/10 hover:opacity-100" onClick={() => dismiss(toast.id)}>
+      <button
+        type="button"
+        aria-label="Dismiss"
+        className="flex size-7 shrink-0 items-center justify-center rounded-md opacity-60 hover:bg-white/10 hover:opacity-100"
+        onClick={() => dismiss(toast.id)}
+      >
         <X size={14} />
       </button>
     </div>

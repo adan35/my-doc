@@ -19,12 +19,18 @@ export function toggleWrap(view: EditorView, marker: string, placeholder = 'text
     const text = state.sliceDoc(range.from, range.to);
     if (text.startsWith(marker) && text.endsWith(marker) && text.length >= marker.length * 2) {
       const inner = text.slice(marker.length, text.length - marker.length);
-      return { changes: { from: range.from, to: range.to, insert: inner }, range: EditorSelection.range(range.from, range.from + inner.length) };
+      return {
+        changes: { from: range.from, to: range.to, insert: inner },
+        range: EditorSelection.range(range.from, range.from + inner.length),
+      };
     }
     const content = text || placeholder;
     return {
       changes: { from: range.from, to: range.to, insert: `${marker}${content}${marker}` },
-      range: EditorSelection.range(range.from + marker.length, range.from + marker.length + content.length),
+      range: EditorSelection.range(
+        range.from + marker.length,
+        range.from + marker.length + content.length,
+      ),
     };
   });
   view.dispatch(state.update(tr, { scrollIntoView: true, userEvent: 'input.format' }));
@@ -55,7 +61,7 @@ export function toggleLinePrefix(view: EditorView, prefix: string): boolean {
   const seen = new Set<number>();
   const strip = /^(\s*)(#{1,6}\s+|[-*+]\s+\[[ xX]\]\s+|[-*+]\s+|\d+[.)]\s+|>\s?)?/;
   for (const range of state.selection.ranges) {
-    for (let pos = range.from; pos <= range.to; ) {
+    for (let pos = range.from; pos <= range.to;) {
       const line = state.doc.lineAt(pos);
       if (!seen.has(line.number)) {
         seen.add(line.number);
@@ -63,7 +69,11 @@ export function toggleLinePrefix(view: EditorView, prefix: string): boolean {
         const indent = m[1] ?? '';
         const existing = m[2] ?? '';
         const replacement = existing.trim() === prefix.trim() ? '' : prefix;
-        changes.push({ from: line.from + indent.length, to: line.from + indent.length + existing.length, insert: replacement });
+        changes.push({
+          from: line.from + indent.length,
+          to: line.from + indent.length + existing.length,
+          insert: replacement,
+        });
       }
       pos = line.to + 1;
     }

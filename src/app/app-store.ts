@@ -6,6 +6,8 @@ import { Workspace } from './workspace';
 import { WorkspaceSession } from './session';
 import { prefs } from './prefs';
 import { seedWorkspace } from './seed';
+import { navigate, useRouter } from './router';
+import { useUi } from './ui-store';
 
 export interface RecentItem {
   id: EntryId;
@@ -28,6 +30,7 @@ interface AppState {
 }
 
 const RECENTS_LIMIT = 30;
+let initPromise: Promise<void> | null = null;
 const LAST_WS_KEY = 'mydoc:last-workspace';
 const recentsKey = (ws: string) => `mydoc:recents:${ws}`;
 const expandedKey = (ws: string) => `mydoc:expanded:${ws}`;
@@ -84,7 +87,16 @@ export const appActions = {
     set({ provider });
   },
 
-  async init() {
+  init(): Promise<void> {
+    // Idempotent: React StrictMode and retries may call this more than once.
+    if (get().phase === 'ready') return Promise.resolve();
+    initPromise ??= appActions.doInit().finally(() => {
+      initPromise = null;
+    });
+    return initPromise;
+  },
+
+  async doInit() {
     try {
       set({ phase: 'loading', error: undefined });
       const provider = get().provider;
@@ -99,7 +111,14 @@ export const appActions = {
       const last = prefs.get<string | null>(LAST_WS_KEY, null);
       const info = workspaces.find((w) => w.id === last) ?? workspaces[0]!;
       const s = await openSession(info);
-      if (fresh) await seedWorkspace(s.workspace);
+      if (fresh) {
+        const welcome = await seedWorkspace(s.workspace);
+        // First launch opens the welcome guide, rendered.
+        if (useRouter.getState().route.name === 'home') {
+          useUi.getState().setViewMode(welcome.id, 'preview');
+          navigate({ name: 'doc', id: welcome.id }, { replace: true });
+        }
+      }
       set({ phase: 'ready' });
       void requestPersistence();
     } catch (err) {

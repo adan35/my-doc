@@ -59,7 +59,12 @@ function PromptDialog({ req }: { req: Extract<DialogRequest, { kind: 'prompt' }>
           <button type="button" className="btn btn-secondary" onClick={() => resolve(null)}>
             Cancel
           </button>
-          <button type="submit" form="prompt-form" className="btn btn-primary" disabled={touched && !!error}>
+          <button
+            type="submit"
+            form="prompt-form"
+            className="btn btn-primary"
+            disabled={touched && !!error}
+          >
             {options.confirmLabel ?? 'OK'}
           </button>
         </>
@@ -117,10 +122,19 @@ function ConfirmDialog({ req }: { req: Extract<DialogRequest, { kind: 'confirm' 
       initialFocus={options.danger ? cancel : undefined}
       footer={
         <>
-          <button ref={cancel} type="button" className="btn btn-secondary" onClick={() => resolve(false)}>
+          <button
+            ref={cancel}
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => resolve(false)}
+          >
             Cancel
           </button>
-          <button type="button" className={`btn ${options.danger ? 'btn-danger' : 'btn-primary'}`} onClick={() => resolve(true)}>
+          <button
+            type="button"
+            className={`btn ${options.danger ? 'btn-danger' : 'btn-primary'}`}
+            onClick={() => resolve(true)}
+          >
             {options.confirmLabel ?? 'Confirm'}
           </button>
         </>
@@ -132,14 +146,15 @@ function ConfirmDialog({ req }: { req: Extract<DialogRequest, { kind: 'confirm' 
 function ConflictDialog({ req }: { req: Extract<DialogRequest, { kind: 'conflict' }> }) {
   const { options, resolve } = req;
   const [applyToAll, setApplyToAll] = useState(false);
-  const pick = (action: 'keep-both' | 'replace' | 'skip' | 'cancel') => resolve({ action, applyToAll });
+  const pick = (action: 'keep-both' | 'replace' | 'skip' | 'cancel') =>
+    resolve({ action, applyToAll });
   return (
     <Dialog
       title="A file with this name already exists"
       description={
         <>
-          <strong className="break-all text-ink">{options.name}</strong> is already in this folder. Replacing keeps the old
-          text in version history.
+          <strong className="break-all text-ink">{options.name}</strong> is already in this folder.
+          Replacing keeps the old text in version history.
         </>
       }
       onClose={() => pick('cancel')}
@@ -162,7 +177,12 @@ function ConflictDialog({ req }: { req: Extract<DialogRequest, { kind: 'conflict
     >
       {options.count > 1 && (
         <label className="flex items-center gap-2 text-[14px] text-charcoal">
-          <input type="checkbox" className="size-4 accent-[var(--primary)]" checked={applyToAll} onChange={(e) => setApplyToAll(e.target.checked)} />
+          <input
+            type="checkbox"
+            className="size-4 accent-[var(--primary)]"
+            checked={applyToAll}
+            onChange={(e) => setApplyToAll(e.target.checked)}
+          />
           Do this for all remaining conflicts
         </label>
       )}
@@ -187,7 +207,9 @@ function FolderPicker({ req }: { req: Extract<DialogRequest, { kind: 'pick-folde
     };
     walk(null, 0);
     const q = filter.trim().toLowerCase();
-    return q ? out.filter((r) => r.path.toLowerCase().includes(q)).map((r) => ({ ...r, depth: 0 })) : out;
+    return q
+      ? out.filter((r) => r.path.toLowerCase().includes(q)).map((r) => ({ ...r, depth: 0 }))
+      : out;
   }, [tree, excluded, filter]);
   const valid = selected === null || ![...excluded].some((id) => tree.isWithin(selected, id));
   return (
@@ -200,14 +222,29 @@ function FolderPicker({ req }: { req: Extract<DialogRequest, { kind: 'pick-folde
           <button type="button" className="btn btn-secondary" onClick={() => resolve(undefined)}>
             Cancel
           </button>
-          <button type="button" className="btn btn-primary" disabled={!valid} onClick={() => resolve(selected)}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={!valid}
+            onClick={() => resolve(selected)}
+          >
             {options.confirmLabel ?? 'Choose'}
           </button>
         </>
       }
     >
-      <input className="input mb-2" placeholder="Filter folders" value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filter folders" />
-      <div role="listbox" aria-label="Folders" className="max-h-[50vh] min-h-[200px] overflow-y-auto rounded-md border border-hairline p-1">
+      <input
+        className="input mb-2"
+        placeholder="Filter folders"
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+        aria-label="Filter folders"
+      />
+      <div
+        role="listbox"
+        aria-label="Folders"
+        className="max-h-[50vh] min-h-[200px] overflow-y-auto rounded-md border border-hairline p-1"
+      >
         <button
           type="button"
           role="option"
@@ -237,7 +274,9 @@ function FolderPicker({ req }: { req: Extract<DialogRequest, { kind: 'pick-folde
             <span className="truncate">{filter ? r.path : r.name}</span>
           </button>
         ))}
-        {!rows.length && filter && <p className="p-3 text-caption text-steel">No folders match "{filter}".</p>}
+        {!rows.length && filter && (
+          <p className="p-3 text-caption text-steel">No folders match "{filter}".</p>
+        )}
       </div>
       {selected && (
         <p className="mt-2 flex items-center gap-1 truncate text-caption text-steel">

@@ -22,7 +22,18 @@ interface Props {
 }
 
 /** A list or grid of entries, used by folder, favorites, recent, tag and trash views. */
-export function EntryList({ entries, view = 'list', showPath, meta, menu = entryMenu, onOpen, selected, onSelect, dragProps, trailing }: Props) {
+export function EntryList({
+  entries,
+  view = 'list',
+  showPath,
+  meta,
+  menu = entryMenu,
+  onOpen,
+  selected,
+  onSelect,
+  dragProps,
+  trailing,
+}: Props) {
   const tree = useTree()!;
   const open = onOpen ?? ((e: Entry) => void openEntry(e.id));
   const onClick = (e: Entry, ev: React.MouseEvent) => {
@@ -52,8 +63,12 @@ export function EntryList({ entries, view = 'list', showPath, meta, menu = entry
                 <FileIcon entry={e} size={18} />
               </span>
               <span className="w-full min-w-0">
-                <span className="line-clamp-2 text-[14px] font-medium break-words text-ink">{e.name}</span>
-                <span className="mt-0.5 block truncate text-xs text-steel">{meta ? meta(e) : relativeTime(e.updatedAt)}</span>
+                <span className="line-clamp-2 text-[14px] font-medium break-words text-ink">
+                  {e.name}
+                </span>
+                <span className="mt-0.5 block truncate text-xs text-steel">
+                  {meta ? meta(e) : relativeTime(e.updatedAt)}
+                </span>
               </span>
             </button>
           </li>
@@ -64,23 +79,57 @@ export function EntryList({ entries, view = 'list', showPath, meta, menu = entry
 
   const compact = view === 'compact';
   return (
-    <ul className="divide-y divide-hairline-soft overflow-hidden rounded-lg border border-hairline" role="list">
+    <ul
+      className="divide-y divide-hairline-soft overflow-hidden rounded-lg border border-hairline"
+      role="list"
+    >
       {entries.map((e) => (
-        <li key={e.id} className={`group flex items-center gap-1 pr-1.5 ${selected?.has(e.id) ? 'bg-primary-soft' : 'hover:bg-surface-soft'}`} onContextMenu={ctx(e)} {...dragProps?.(e)}>
-          <button type="button" className={`flex min-w-0 flex-1 items-center gap-3 pl-3 text-left ${compact ? 'py-1.5' : 'py-2.5'}`} onClick={(ev) => onClick(e, ev)} title={tree.pathOf(e.id)}>
+        <li
+          key={e.id}
+          className={`group flex items-center gap-1 pr-1.5 ${selected?.has(e.id) ? 'bg-primary-soft' : 'hover:bg-surface-soft'}`}
+          onContextMenu={ctx(e)}
+          {...dragProps?.(e)}
+        >
+          <button
+            type="button"
+            className={`flex min-w-0 flex-1 items-center gap-3 pl-3 text-left ${compact ? 'py-1.5' : 'py-2.5'}`}
+            onClick={(ev) => onClick(e, ev)}
+            title={tree.pathOf(e.id)}
+          >
             <FileIcon entry={e} className="shrink-0 text-steel" size={compact ? 15 : 17} />
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-1.5">
                 <span className="truncate text-[14px] text-ink">{e.name}</span>
-                {e.favorite && <Star size={12} className="shrink-0 fill-[#f5c84c] text-[#e0a800]" aria-label="Favorite" />}
+                {e.favorite && (
+                  <Star
+                    size={12}
+                    className="shrink-0 fill-[#f5c84c] text-[#e0a800]"
+                    aria-label="Favorite"
+                  />
+                )}
               </span>
-              {showPath && !compact && <span className="block truncate text-xs text-steel">{tree.dirOf(e.id) || 'Workspace root'}</span>}
+              {showPath && !compact && (
+                <span className="block truncate text-xs text-steel">
+                  {tree.dirOf(e.id) || 'Workspace root'}
+                </span>
+              )}
             </span>
-            <span className="hidden shrink-0 text-right text-caption text-steel sm:block">{meta ? meta(e) : relativeTime(e.updatedAt)}</span>
-            {!compact && e.kind === 'file' && <span className="hidden w-16 shrink-0 text-right text-caption text-stone md:block">{formatBytes(e.size)}</span>}
+            <span className="hidden shrink-0 text-right text-caption text-steel sm:block">
+              {meta ? meta(e) : relativeTime(e.updatedAt)}
+            </span>
+            {!compact && e.kind === 'file' && (
+              <span className="hidden w-16 shrink-0 text-right text-caption text-stone md:block">
+                {formatBytes(e.size)}
+              </span>
+            )}
           </button>
           {trailing?.(e)}
-          <button type="button" className="icon-btn opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100" aria-label={`Actions for ${e.name}`} onClick={(ev) => openMenuAt(ev.currentTarget, menu(e), e.name)}>
+          <button
+            type="button"
+            className="icon-btn opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+            aria-label={`Actions for ${e.name}`}
+            onClick={(ev) => openMenuAt(ev.currentTarget, menu(e), e.name)}
+          >
             <MoreHorizontal size={16} />
           </button>
         </li>

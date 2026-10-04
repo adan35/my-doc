@@ -2,7 +2,7 @@ import { blankInlineCode, proseLines } from './markdown-scan';
 import { parseFrontMatter, withFrontMatter } from './frontmatter';
 
 /** Tag syntax: `#word`, letters/digits/`_`/`-`/`/`, must contain a letter. */
-const TAG_RE = /(^|[\s(\[,;])#([\p{L}\p{N}_\-/]*\p{L}[\p{L}\p{N}_\-/]*)/gu;
+const TAG_RE = /(^|[\s([,;])#([\p{L}\p{N}_\-/]*\p{L}[\p{L}\p{N}_\-/]*)/gu;
 
 export function normalizeTag(tag: string): string {
   return tag.replace(/^#/, '').trim().toLocaleLowerCase();

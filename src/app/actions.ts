@@ -25,7 +25,8 @@ const nameValidator = (value: string) => {
 export function contextFolderId(): EntryId | null {
   const route = useRouter.getState().route;
   const tree = ws().tree;
-  if (route.name === 'folder') return route.id && tree.get(route.id) && !tree.isTrashed(route.id) ? route.id : null;
+  if (route.name === 'folder')
+    return route.id && tree.get(route.id) && !tree.isTrashed(route.id) ? route.id : null;
   const active = useEditor.getState().activeId;
   if (route.name === 'doc' && active) return tree.get(active)?.parentId ?? null;
   return null;
@@ -54,7 +55,10 @@ async function guard<T>(message: string, fn: () => Promise<T>): Promise<T | unde
   }
 }
 
-export async function newDocument(parentId: EntryId | null = contextFolderId(), templateId?: string) {
+export async function newDocument(
+  parentId: EntryId | null = contextFolderId(),
+  templateId?: string,
+) {
   const template = TEMPLATES.find((t) => t.id === (templateId ?? 'blank')) ?? TEMPLATES[0]!;
   const title = expandTemplate(template.fileName, { title: '' }) || 'Untitled';
   return guard('Unable to create the document.', async () => {
@@ -132,7 +136,10 @@ export async function moveEntries(ids: EntryId[], targetId?: EntryId | null) {
   if (target) appActions.setExpanded(target, true);
   const dest = target ? ws().get(target)?.name : 'the workspace root';
   toast({
-    message: moved.length === 1 ? `Moved "${moved[0]!.name}" to ${dest}.` : `Moved ${moved.length} items to ${dest}.`,
+    message:
+      moved.length === 1
+        ? `Moved "${moved[0]!.name}" to ${dest}.`
+        : `Moved ${moved.length} items to ${dest}.`,
     action: {
       label: 'Undo',
       run: () => {
@@ -163,9 +170,13 @@ export async function trashEntries(ids: EntryId[]) {
     if (next && !ws().tree.isTrashed(next)) navigate({ name: 'doc', id: next }, { replace: true });
     else navigate({ name: 'home' }, { replace: true });
   }
-  if (route.name === 'folder' && route.id && ws().tree.isTrashed(route.id)) navigate({ name: 'home' }, { replace: true });
+  if (route.name === 'folder' && route.id && ws().tree.isTrashed(route.id))
+    navigate({ name: 'home' }, { replace: true });
   toast({
-    message: trashed.length === 1 ? `"${first?.name}" moved to Trash.` : `${trashed.length} items moved to Trash.`,
+    message:
+      trashed.length === 1
+        ? `"${first?.name}" moved to Trash.`
+        : `${trashed.length} items moved to Trash.`,
     action: { label: 'Undo', run: () => void restoreEntries(trashed, true) },
   });
 }
@@ -176,9 +187,15 @@ export async function restoreEntries(ids: EntryId[], quiet = false) {
   for (const r of restored) appActions.reveal(r.id);
   if (!quiet) {
     toast({
-      message: restored.length === 1 ? `Restored "${restored[0]!.name}".` : `Restored ${restored.length} items.`,
+      message:
+        restored.length === 1
+          ? `Restored "${restored[0]!.name}".`
+          : `Restored ${restored.length} items.`,
       tone: 'success',
-      action: restored[0]!.kind === 'file' ? { label: 'Open', run: () => void openEntry(restored[0]!.id) } : undefined,
+      action:
+        restored[0]!.kind === 'file'
+          ? { label: 'Open', run: () => void openEntry(restored[0]!.id) }
+          : undefined,
     });
   }
 }
@@ -220,7 +237,10 @@ export async function toggleFavorite(id: EntryId) {
 
 export async function runImport(items: ImportItem[], targetId: EntryId | null = contextFolderId()) {
   if (!items.length) return;
-  const progressToast = toast({ message: `Importing ${items.length} item${items.length > 1 ? 's' : ''}…`, duration: 60_000 });
+  const progressToast = toast({
+    message: `Importing ${items.length} item${items.length > 1 ? 's' : ''}…`,
+    duration: 60_000,
+  });
   try {
     const result = await importItems(ws(), targetId, items, (name, remaining) =>
       dialogs.conflict({ name, count: remaining }),
@@ -230,7 +250,9 @@ export async function runImport(items: ImportItem[], targetId: EntryId | null = 
     const parts = [`${result.files} file${result.files === 1 ? '' : 's'}`];
     if (result.folders) parts.push(`${result.folders} folder${result.folders === 1 ? '' : 's'}`);
     if (result.replaced) parts.push(`${result.replaced} replaced`);
-    const skipped = result.skipped.filter((s) => s.reason !== 'Already exists.' && s.reason !== 'Import cancelled.');
+    const skipped = result.skipped.filter(
+      (s) => s.reason !== 'Already exists.' && s.reason !== 'Import cancelled.',
+    );
     toast({
       message: `Imported ${parts.join(', ')}.`,
       detail: skipped.length
@@ -240,7 +262,9 @@ export async function runImport(items: ImportItem[], targetId: EntryId | null = 
             .join('; ')}${skipped.length > 3 ? '…' : ''}`
         : undefined,
       tone: skipped.length ? 'info' : 'success',
-      action: result.firstFileId ? { label: 'Open', run: () => void openEntry(result.firstFileId!) } : undefined,
+      action: result.firstFileId
+        ? { label: 'Open', run: () => void openEntry(result.firstFileId!) }
+        : undefined,
     });
   } catch (err) {
     dismissToast(progressToast);
@@ -272,7 +296,8 @@ export async function addTagTo(id: EntryId) {
     title: 'Add tag',
     label: 'Tag',
     confirmLabel: 'Add',
-    validate: (v) => (isValidTag(normalizeTag(v)) ? null : 'Tags can use letters, numbers, -, _ and /.'),
+    validate: (v) =>
+      isValidTag(normalizeTag(v)) ? null : 'Tags can use letters, numbers, -, _ and /.',
   });
   if (!tag) return;
   await editorActions.flush(id);
@@ -290,22 +315,34 @@ export async function renameTagEverywhere(tag: string) {
     label: 'New tag name',
     initial: tag,
     confirmLabel: 'Rename',
-    validate: (v) => (isValidTag(normalizeTag(v)) ? null : 'Tags can use letters, numbers, -, _ and /.'),
+    validate: (v) =>
+      isValidTag(normalizeTag(v)) ? null : 'Tags can use letters, numbers, -, _ and /.',
   });
   if (!next || normalizeTag(next) === tag) return;
   await editorActions.flushAll();
   const ids = session().knowledge.docsWithTag(ws().tree, tag);
-  const changed = await guard('Unable to rename the tag.', () => ws().renameTag(ids, tag, normalizeTag(next)));
+  const changed = await guard('Unable to rename the tag.', () =>
+    ws().renameTag(ids, tag, normalizeTag(next)),
+  );
   if (changed) {
-    toast({ message: `Renamed #${tag} to #${normalizeTag(next)} in ${changed.length} document${changed.length === 1 ? '' : 's'}.`, tone: 'success' });
+    toast({
+      message: `Renamed #${tag} to #${normalizeTag(next)} in ${changed.length} document${changed.length === 1 ? '' : 's'}.`,
+      tone: 'success',
+    });
     navigate({ name: 'tags', tag: normalizeTag(next) }, { replace: true });
   }
 }
 
 export async function restoreVersion(id: EntryId, versionId: string) {
   await editorActions.flush(id);
-  const restored = await guard('Unable to restore this version.', () => ws().restoreVersion(id, versionId));
-  if (restored) toast({ message: 'Version restored. The previous text was saved to history.', tone: 'success' });
+  const restored = await guard('Unable to restore this version.', () =>
+    ws().restoreVersion(id, versionId),
+  );
+  if (restored)
+    toast({
+      message: 'Version restored. The previous text was saved to history.',
+      tone: 'success',
+    });
 }
 
 export function selectedOrActive(): Entry | undefined {
@@ -350,7 +387,9 @@ export async function renameWorkspace() {
     validate: nameValidator,
   });
   if (!name) return;
-  await guard('Unable to rename the workspace.', () => appActions.renameWorkspace(s.workspace.id, name.trim()));
+  await guard('Unable to rename the workspace.', () =>
+    appActions.renameWorkspace(s.workspace.id, name.trim()),
+  );
 }
 
 export async function deleteWorkspace() {
@@ -359,7 +398,7 @@ export async function deleteWorkspace() {
   const ok = await dialogs.confirm({
     title: `Delete "${s.workspace.name}"?`,
     message:
-      'Every document, folder and version in this workspace will be deleted from this browser. Export it first if you want a copy. This can\'t be undone.',
+      "Every document, folder and version in this workspace will be deleted from this browser. Export it first if you want a copy. This can't be undone.",
     confirmLabel: 'Delete workspace',
     danger: true,
   });
