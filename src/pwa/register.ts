@@ -19,6 +19,15 @@ export async function installApp() {
 }
 
 /**
+ * The desktop (Tauri) and mobile (Capacitor) apps ship the files themselves; a
+ * service worker there would keep serving stale files after an app update.
+ */
+function isNativeShell(): boolean {
+  const w = window as { Capacitor?: { isNativePlatform?: () => boolean } };
+  return '__TAURI_INTERNALS__' in window || w.Capacitor?.isNativePlatform?.() === true;
+}
+
+/**
  * Registers the service worker (production only) so My Doc opens without a network
  * connection, and offers a reload when a new version has been downloaded.
  */
@@ -29,7 +38,7 @@ export function registerServiceWorker() {
   });
   addEventListener('appinstalled', () => (installPrompt = null));
 
-  if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return;
+  if (!import.meta.env.PROD || !('serviceWorker' in navigator) || isNativeShell()) return;
   if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
 
   let reloading = false;
