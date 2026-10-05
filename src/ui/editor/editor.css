@@ -1,0 +1,218 @@
+/* CodeMirror chrome, mapped onto design tokens so both themes feel native. */
+.cm-editor {
+  height: 100%;
+  background: var(--canvas);
+  color: var(--charcoal);
+  font-size: var(--editor-size, 15px);
+}
+.cm-editor.cm-focused {
+  outline: none;
+}
+.cm-scroller {
+  font-family: var(--editor-font, var(--font-mono));
+  line-height: 1.7;
+  overscroll-behavior: contain;
+}
+.cm-editor .cm-content {
+  padding: 24px 0 40vh;
+  caret-color: var(--ink);
+  max-width: var(--editor-max, 820px);
+  margin: 0 auto;
+  width: 100%;
+}
+.cm-editor .cm-content .cm-line {
+  padding: 0 clamp(16px, 4vw, 48px);
+}
+.cm-gutters {
+  background: var(--canvas);
+  border-right: none;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.cm-activeLineGutter {
+  background: transparent;
+  color: var(--steel);
+}
+.cm-activeLine {
+  background: color-mix(in srgb, var(--hover) 60%, transparent);
+}
+.cm-cursor,
+.cm-dropCursor {
+  border-left: 2px solid var(--ink);
+}
+.cm-selectionBackground,
+.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground,
+.cm-content ::selection {
+  background: var(--selection) !important;
+}
+.cm-selectionMatch {
+  background: color-mix(in srgb, var(--mark) 70%, transparent);
+}
+.cm-searchMatch {
+  background: var(--mark);
+  outline: 1px solid color-mix(in srgb, var(--warning) 40%, transparent);
+  border-radius: 2px;
+}
+.cm-searchMatch-selected {
+  background: color-mix(in srgb, var(--warning) 35%, transparent);
+}
+.cm-placeholder {
+  color: var(--muted);
+}
+.cm-panels {
+  background: var(--surface-soft);
+  color: var(--charcoal);
+  border-color: var(--hairline) !important;
+}
+.cm-panels-top {
+  border-bottom: 1px solid var(--hairline);
+}
+.cm-panel.cm-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 40px 8px 12px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+.cm-panel.cm-search br {
+  flex-basis: 100%;
+  height: 0;
+}
+.cm-panel.cm-search input[type='checkbox'] {
+  accent-color: var(--primary);
+}
+.cm-panel.cm-search label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--slate);
+  font-size: 12px;
+}
+.cm-textfield {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 13px;
+  min-width: 160px;
+  flex: 1 1 160px;
+  max-width: 280px;
+}
+.cm-textfield:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.cm-button {
+  height: 30px;
+  padding: 0 10px;
+  background: var(--canvas) !important;
+  background-image: none !important;
+  border: 1px solid var(--hairline) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--charcoal);
+  font-size: 12px;
+  text-transform: capitalize;
+}
+.cm-button:hover {
+  background: var(--hover) !important;
+}
+.cm-panel.cm-search [name='close'] {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  color: var(--steel);
+  font-size: 18px;
+}
+.cm-tooltip {
+  background: var(--canvas) !important;
+  border: none !important;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-3);
+  overflow: hidden;
+}
+.cm-tooltip-autocomplete > ul {
+  font-family: var(--font-sans) !important;
+  font-size: 13px;
+  max-height: 260px !important;
+  padding: 4px;
+}
+.cm-tooltip-autocomplete > ul > li {
+  padding: 4px 8px !important;
+  border-radius: var(--radius-sm);
+  color: var(--charcoal);
+}
+.cm-tooltip-autocomplete > ul > li[aria-selected] {
+  background: var(--active) !important;
+  color: var(--ink) !important;
+}
+.cm-completionDetail {
+  color: var(--stone);
+  font-style: normal !important;
+  margin-left: 8px;
+}
+.cm-foldPlaceholder {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  color: var(--steel);
+}
+
+/* Markdown token styling inside the editor. */
+.cm-md-heading {
+  color: var(--ink);
+  font-weight: 650;
+}
+.cm-md-h1 {
+  font-size: 1.35em;
+}
+.cm-md-h2 {
+  font-size: 1.2em;
+}
+.cm-md-h3 {
+  font-size: 1.08em;
+}
+.cm-md-mark {
+  color: var(--muted);
+}
+.cm-md-link {
+  color: var(--link);
+}
+.cm-md-url {
+  color: var(--stone);
+}
+.cm-md-code {
+  font-family: var(--font-mono);
+  background: var(--code-bg);
+  border-radius: 3px;
+}
+.cm-md-quote {
+  color: var(--slate);
+  font-style: italic;
+}
+.cm-md-strong {
+  font-weight: 650;
+  color: var(--ink);
+}
+.cm-md-em {
+  font-style: italic;
+}
+.cm-md-strike {
+  text-decoration: line-through;
+  color: var(--steel);
+}
+.cm-md-list {
+  color: var(--primary);
+}
+.cm-md-meta {
+  color: var(--stone);
+}
+.cm-md-tag {
+  color: var(--primary);
+}

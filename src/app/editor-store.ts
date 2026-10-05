@@ -1,0 +1,322 @@
+import { create } from 'zustand';
+import type { EntryId } from '@/domain/types';
+import { fileTypeOf, isTextType } from '@/domain/names';
+import { useApp, ws } from './app-store';
+import { useSettings } from './settings-store';
+import { prefs } from './prefs';
+import { toastError, toast } from './toast-store';
+
+export type SaveStatus = 'loading' | 'saved' | 'unsaved' | 'saving' | 'error';
+
+export interface Buffer {
+  id: EntryId;
+  text: string;
+  /** Text as last persisted. `text !== savedText` means there are unsaved edits. */
+  savedText: string;
+  status: SaveStatus;
+  error?: string;
+  /** Bumps when text is replaced from outside the editor (restore, link rewrite, tag edit). */
+  rev: number;
+}
+
+interface EditorState {
+  tabs: EntryId[];
+  activeId: EntryId | null;
+  closed: EntryId[];
+  buffers: Record<EntryId, Buffer>;
+}
+
+export const useEditor = create<EditorState>(() => ({
+  tabs: [],
+  activeId: null,
+  closed: [],
+  buffers: {},
+}));
+
+const get = useEditor.getState;
+const set = useEditor.setState;
+const timers = new Map<EntryId, ReturnType<typeof setTimeout>>();
+const retries = new Map<EntryId, number>();
+const inflight = new Map<EntryId, Promise<void>>();
+const tabsKey = (wsId: string) => `mydoc:tabs:${wsId}`;
+const recoveryKey = (wsId: string) => `mydoc:recovery:${wsId}`;
+
+function patchBuffer(id: EntryId, patch: Partial<Buffer>) {
+  set((s) => {
+    const b = s.buffers[id];
+    return b ? { buffers: { ...s.buffers, [id]: { ...b, ...patch } } } : s;
+  });
+}
+
+function persistTabs() {
+  const s = useApp.getState().session;
+  if (!s) return;
+  const { tabs, activeId } = get();
+  prefs.set(tabsKey(s.workspace.id), { tabs, activeId });
+}
+
+async function loadBuffer(id: EntryId) {
+  if (get().buffers[id]) return;
+  set((s) => ({
+    buffers: { ...s.buffers, [id]: { id, text: '', savedText: '', status: 'loading', rev: 0 } },
+  }));
+  try {
+    const text = await ws().readText(id);
+    set((s) => ({
+      buffers: { ...s.buffers, [id]: { id, text, savedText: text, status: 'saved', rev: 1 } },
+    }));
+  } catch (err) {
+    patchBuffer(id, { status: 'error', error: 'This document could not be read.' });
+    toastError('Unable to open this document.', err);
+  }
+}
+
+function scheduleSave(id: EntryId, delay = useSettings.getState().autosaveDelay) {
+  clearTimeout(timers.get(id));
+  timers.set(
+    id,
+    setTimeout(() => void editorActions.flush(id), delay),
+  );
+}
+
+/** Writes all dirty buffers to localStorage synchronously, for crash/close recovery. */
+export function writeRecoveryDrafts() {
+  const s = useApp.getState().session;
+  if (!s) return;
+  const drafts: Record<EntryId, { text: string; at: number }> = {};
+  for (const b of Object.values(get().buffers)) {
+    if (b.status !== 'loading' && b.text !== b.savedText)
+      drafts[b.id] = { text: b.text, at: Date.now() };
+  }
+  if (Object.keys(drafts).length) prefs.set(recoveryKey(s.workspace.id), drafts);
+  else prefs.remove(recoveryKey(s.workspace.id));
+}
+
+export const editorActions = {
+  async open(id: EntryId, opts: { activate?: boolean } = {}) {
+    const entry = ws().get(id);
+    if (!entry || entry.kind !== 'file') return;
+    set((s) => ({
+      tabs: s.tabs.includes(id) ? s.tabs : [...s.tabs, id],
+      activeId: opts.activate === false ? s.activeId : id,
+    }));
+    persistTabs();
+    if (ws().isTextEntry(entry) && isTextType(fileTypeOf(entry.name))) await loadBuffer(id);
+  },
+
+  activate(id: EntryId | null) {
+    set({ activeId: id });
+    persistTabs();
+  },
+
+  setText(id: EntryId, text: string) {
+    const b = get().buffers[id];
+    if (!b || b.text === text) return;
+    patchBuffer(id, { text, status: text === b.savedText ? 'saved' : 'unsaved' });
+    scheduleSave(id);
+  },
+
+  /** Saves a buffer now (if dirty). Resolves once persisted or failed. */
+  async flush(id: EntryId): Promise<void> {
+    clearTimeout(timers.get(id));
+    timers.delete(id);
+    const pending = inflight.get(id);
+    if (pending) await pending;
+    const b = get().buffers[id];
+    if (!b || b.status === 'loading' || b.text === b.savedText) return;
+    const text = b.text;
+    const run = (async () => {
+      patchBuffer(id, { status: 'saving', error: undefined });
+      try {
+        await ws().saveText(id, text);
+        retries.delete(id);
+        const cur = get().buffers[id];
+        if (!cur) return;
+        patchBuffer(id, { savedText: text, status: cur.text === text ? 'saved' : 'unsaved' });
+        if (cur.text !== text) scheduleSave(id);
+        writeRecoveryDrafts();
+      } catch (err) {
+        const attempt = (retries.get(id) ?? 0) + 1;
+        retries.set(id, attempt);
+        writeRecoveryDrafts();
+        patchBuffer(id, {
+          status: 'error',
+          error: err instanceof Error ? err.message : 'Unable to save.',
+        });
+        if (attempt === 1) {
+          toastError(
+            'Unable to save this document. Your changes are still here and kept locally.',
+            err,
+            {
+              label: 'Try again',
+              run: () => void editorActions.flush(id),
+            },
+          );
+        }
+        // Keep retrying with backoff; edits are never dropped.
+        scheduleSave(id, Math.min(30_000, 2000 * 2 ** (attempt - 1)));
+      }
+    })();
+    inflight.set(id, run);
+    try {
+      await run;
+    } finally {
+      inflight.delete(id);
+    }
+  },
+
+  async flushAll() {
+    await Promise.all(Object.keys(get().buffers).map((id) => editorActions.flush(id)));
+  },
+
+  hasUnsaved(): boolean {
+    return Object.values(get().buffers).some(
+      (b) => b.status !== 'loading' && b.text !== b.savedText,
+    );
+  },
+
+  async close(id: EntryId) {
+    await editorActions.flush(id);
+    const b = get().buffers[id];
+    if (b && b.text !== b.savedText) {
+      toast({
+        message: 'This tab has changes that could not be saved yet, so it stays open.',
+        tone: 'error',
+      });
+      return;
+    }
+    set((s) => {
+      const i = s.tabs.indexOf(id);
+      const tabs = s.tabs.filter((t) => t !== id);
+      const buffers = { ...s.buffers };
+      delete buffers[id];
+      const activeId =
+        s.activeId === id ? (tabs[Math.min(i, tabs.length - 1)] ?? null) : s.activeId;
+      return {
+        tabs,
+        buffers,
+        activeId,
+        closed: [id, ...s.closed.filter((c) => c !== id)].slice(0, 20),
+      };
+    });
+    persistTabs();
+  },
+
+  async closeOthers(id: EntryId) {
+    for (const t of get().tabs) if (t !== id) await editorActions.close(t);
+  },
+
+  async closeAll() {
+    for (const t of [...get().tabs]) await editorActions.close(t);
+  },
+
+  /** Returns the id of the reopened tab, if any. */
+  async reopenClosed(): Promise<EntryId | null> {
+    const tree = ws().tree;
+    const closed = get().closed;
+    const id = closed.find((c) => tree.get(c) && !tree.isTrashed(c));
+    if (!id) return null;
+    set({ closed: closed.filter((c) => c !== id) });
+    await editorActions.open(id);
+    return id;
+  },
+
+  reorder(from: number, to: number) {
+    set((s) => {
+      const tabs = [...s.tabs];
+      const [moved] = tabs.splice(from, 1);
+      if (moved === undefined) return s;
+      tabs.splice(to, 0, moved);
+      return { tabs };
+    });
+    persistTabs();
+  },
+
+  /** Restores tabs from the last session and applies any recovery drafts. */
+  async restoreSession() {
+    const s = useApp.getState().session;
+    if (!s) return;
+    for (const id of Object.keys(get().buffers)) clearTimeout(timers.get(id));
+    set({ tabs: [], activeId: null, buffers: {}, closed: [] });
+    const tree = s.workspace.tree;
+    const drafts = prefs.get<Record<EntryId, { text: string; at: number }>>(
+      recoveryKey(s.workspace.id),
+      {},
+    );
+    let recovered = 0;
+    for (const [id, draft] of Object.entries(drafts)) {
+      if (!tree.get(id) || typeof draft?.text !== 'string') continue;
+      const stored = await s.workspace.readText(id);
+      if (stored === draft.text) continue;
+      try {
+        await s.workspace.saveText(id, draft.text, 'recovery');
+        recovered++;
+      } catch (err) {
+        toastError('Some unsaved changes could not be recovered yet.', err);
+        return;
+      }
+    }
+    prefs.remove(recoveryKey(s.workspace.id));
+    if (recovered) {
+      toast({
+        message: `Recovered unsaved changes in ${recovered} document${recovered > 1 ? 's' : ''}.`,
+        detail: 'The previous text is kept in version history.',
+        tone: 'success',
+      });
+    }
+    const saved = prefs.get<{ tabs: EntryId[]; activeId: EntryId | null }>(
+      tabsKey(s.workspace.id),
+      {
+        tabs: [],
+        activeId: null,
+      },
+    );
+    const live = saved.tabs.filter((id) => tree.get(id)?.kind === 'file' && !tree.isTrashed(id));
+    set({
+      tabs: live,
+      activeId: live.includes(saved.activeId ?? '') ? saved.activeId : (live[0] ?? null),
+    });
+    for (const id of live) {
+      const e = tree.get(id)!;
+      if (s.workspace.isTextEntry(e) && isTextType(fileTypeOf(e.name))) void loadBuffer(id);
+    }
+  },
+
+  /** Keeps buffers in sync with workspace changes made outside the editor. */
+  onExternalContent(ids: EntryId[]) {
+    for (const id of ids) {
+      const b = get().buffers[id];
+      if (!b) continue;
+      const text = ws().allTexts().get(id);
+      if (text === undefined || text === b.savedText) continue;
+      if (b.text === b.savedText) {
+        patchBuffer(id, { text, savedText: text, status: 'saved', rev: b.rev + 1 });
+      } else {
+        // Local edits win; they'll be saved over the external change (which is versioned).
+        patchBuffer(id, { savedText: text });
+      }
+    }
+  },
+
+  /** Closes tabs whose entries were trashed or deleted. */
+  onTreeChange() {
+    const tree = ws().tree;
+    const gone = get().tabs.filter((id) => !tree.get(id) || tree.isTrashed(id));
+    if (!gone.length) return;
+    set((s) => {
+      const tabs = s.tabs.filter((t) => !gone.includes(t));
+      const buffers = { ...s.buffers };
+      for (const id of gone) {
+        clearTimeout(timers.get(id));
+        delete buffers[id];
+      }
+      return {
+        tabs,
+        buffers,
+        activeId:
+          s.activeId && gone.includes(s.activeId) ? (tabs[tabs.length - 1] ?? null) : s.activeId,
+      };
+    });
+    persistTabs();
+  },
+};

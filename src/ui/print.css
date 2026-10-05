@@ -1,0 +1,35 @@
+/* Printing (and "Export as PDF") shows only the document, cloned into #print-root. */
+#print-root {
+  display: none;
+}
+@media print {
+  @page {
+    margin: 18mm 16mm;
+  }
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  #root {
+    display: none !important;
+  }
+  #print-root {
+    display: block;
+  }
+  #print-root .prose {
+    color: #111;
+    max-width: none;
+  }
+  .prose .copy-code,
+  .prose .heading-anchor {
+    display: none !important;
+  }
+  .prose pre,
+  .prose .code-block,
+  .prose table,
+  .prose img {
+    break-inside: avoid;
+  }
+}

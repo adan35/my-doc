@@ -1,0 +1,57 @@
+import DOMPurify from 'dompurify';
+
+let configured = false;
+
+/** CSS properties that could be used to overlay or spoof the app's UI. */
+const UNSAFE_STYLE = /(position|url\s*\(|expression|behavio(u)?r|-moz-binding|@import|z-index)/i;
+
+function configure() {
+  if (configured) return;
+  configured = true;
+  DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+    if (node instanceof HTMLAnchorElement && node.hasAttribute('href')) {
+      const href = node.getAttribute('href') ?? '';
+      if (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith('//')) {
+        node.setAttribute('target', '_blank');
+        node.setAttribute('rel', 'noopener noreferrer nofollow');
+      } else {
+        node.removeAttribute('target');
+      }
+    }
+    if (node instanceof HTMLInputElement && node.type !== 'checkbox') {
+      node.remove();
+      return;
+    }
+    if (node instanceof Element && node.hasAttribute('style')) {
+      const style = node.getAttribute('style') ?? '';
+      if (UNSAFE_STYLE.test(style)) node.removeAttribute('style');
+    }
+  });
+}
+
+/** Sanitizes rendered Markdown HTML. Every byte of document content is untrusted. */
+export function sanitizeHtml(html: string): string {
+  configure();
+  return DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true, svg: true, mathMl: true },
+    ADD_ATTR: ['data-line', 'data-heading', 'data-wiki', 'data-fragment', 'aria-hidden', 'target'],
+    FORBID_TAGS: [
+      'style',
+      'form',
+      'iframe',
+      'frame',
+      'object',
+      'embed',
+      'base',
+      'meta',
+      'link',
+      'script',
+      'textarea',
+      'select',
+      'dialog',
+    ],
+    FORBID_ATTR: ['formaction', 'srcset', 'ping', 'autofocus'],
+    ALLOW_DATA_ATTR: false,
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+  });
+}
