@@ -1,0 +1,118 @@
+import { expect, test, type Page } from '@playwright/test';
+import { freshApp, waitSaved, withoutFileSystemAccess } from './helpers';
+
+/**
+ * Stands in for the File System Access API: the picker returns one fake file whose
+ * writes land in `window.__disk`. With `prompt`, the first permission request (made right
+ * after import) is dismissed and the next one is granted.
+ */
+async function fakeDisk(page: Page, name: string, text: string, permission: PermissionState) {
+  await page.addInitScript(
+    ({ name, text, permission }) => {
+      const w = window as unknown as Record<string, unknown>;
+      w.__disk = text;
+      let state = permission;
+      let asked = 0;
+      const handle = {
+        kind: 'file',
+        name,
+        getFile: async () => new File([w.__disk as string], name),
+        createWritable: async () => {
+          if (state !== 'granted') throw new DOMException('denied', 'NotAllowedError');
+          let next = '';
+          return {
+            write: async (t: string) => void (next = t),
+            close: async () => void (w.__disk = next),
+          };
+        },
+        queryPermission: async () => state,
+        // The first request is the one right after import; model the user dismissing it.
+        requestPermission: async () => {
+          if (asked++) state = 'granted';
+          return state;
+        },
+      };
+      w.showOpenFilePicker = async () => [handle];
+    },
+    { name, text, permission },
+  );
+}
+
+async function importViaPicker(page: Page, name: string) {
+  await page.getByRole('button', { name: 'Import' }).first().click();
+  await page.getByRole('menuitem', { name: 'Files…' }).click();
+  await expect(page.getByText(/^Imported 1 file/)).toBeVisible();
+  await page.getByRole('treeitem', { name }).click();
+}
+
+const disk = (page: Page) => page.evaluate(() => (window as unknown as { __disk: string }).__disk);
+
+test('edits to an imported file are saved back to the original file', async ({ page }) => {
+  await fakeDisk(page, 'notes.txt', 'first line\n', 'granted');
+  await freshApp(page);
+  await importViaPicker(page, 'notes.txt');
+  await expect(page.getByTestId('disk-status')).toBeVisible();
+  await page.locator('.cm-content').click();
+  await page.keyboard.press('Control+End');
+  await page.keyboard.type('added on the go');
+  await waitSaved(page);
+  await expect.poll(() => disk(page)).toBe('first line\nadded on the go');
+});
+
+test('asks for permission before writing to disk', async ({ page }) => {
+  await fakeDisk(page, 'todo.md', '# Todo\n', 'prompt');
+  await freshApp(page);
+  await importViaPicker(page, 'todo.md');
+  await page.locator('.cm-content').click();
+  await page.keyboard.press('Control+End');
+  await page.keyboard.type('- [ ] call Sam');
+  await waitSaved(page);
+  expect(await disk(page)).toBe('# Todo\n');
+  await page.getByRole('button', { name: 'Allow saving to disk' }).click();
+  await expect(page.getByTestId('disk-status')).toBeVisible();
+  await expect.poll(() => disk(page)).toBe('# Todo\n- [ ] call Sam');
+});
+
+test('dotfiles and unfamiliar text files open in the editor', async ({ page }) => {
+  await withoutFileSystemAccess(page);
+  await freshApp(page);
+  await page.getByRole('button', { name: 'Import' }).first().click();
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByRole('menuitem', { name: 'Files…' }).click();
+  await (
+    await chooser
+  ).setFiles({ name: '.editorconfig', mimeType: '', buffer: Buffer.from('root = true\n') });
+  await page.getByRole('treeitem', { name: '.editorconfig' }).click();
+  await page.locator('.cm-content').click();
+  await page.keyboard.press('Control+End');
+  await page.keyboard.type('[*]');
+  await expect(page.locator('.cm-content')).toContainText('root = true[*]');
+  await waitSaved(page);
+});
+
+test('the theme toggle switches themes, and line numbers follow', async ({ page }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem('mydoc:settings', JSON.stringify({ theme: 'light', lineNumbers: true })),
+  );
+  await freshApp(page);
+  await page.getByRole('button', { name: 'New document', exact: true }).first().click();
+  await page.keyboard.type('one\ntwo');
+  const html = page.locator('html');
+  await expect(html).toHaveAttribute('data-theme', 'light');
+  await page.getByRole('button', { name: 'Switch to dark theme' }).click();
+  await expect(html).toHaveAttribute('data-theme', 'dark');
+  // The gutter uses the dark canvas, not CodeMirror's light grey default.
+  const gutterBg = await page
+    .locator('.cm-gutters')
+    .evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(gutterBg).toBe('rgb(25, 25, 25)');
+  // Line numbers sit right next to the text.
+  const gap = await page.evaluate(() => {
+    const gutter = document.querySelector('.cm-gutters')!.getBoundingClientRect();
+    const text = document.querySelector('.cm-line')!.getBoundingClientRect();
+    return text.left - gutter.right;
+  });
+  expect(gap).toBeLessThan(24);
+  await page.getByRole('button', { name: 'Switch to light theme' }).click();
+  await expect(html).toHaveAttribute('data-theme', 'light');
+});

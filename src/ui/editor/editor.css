@@ -8,33 +8,28 @@
 .cm-editor.cm-focused {
   outline: none;
 }
-.cm-scroller {
+.cm-editor .cm-scroller {
   /* Font family and line height are set in the editor theme (Editor.tsx). */
   overscroll-behavior: contain;
+  /* Centers the text column, with the line numbers kept right next to it. */
+  padding-inline: max(0px, calc((100% - var(--editor-max, 820px)) / 2));
 }
 .cm-editor .cm-content {
   padding: 24px 0 40vh;
   caret-color: var(--ink);
-  max-width: var(--editor-max, 820px);
-  margin: 0 auto;
-  width: 100%;
 }
 .cm-editor .cm-content .cm-line {
   padding: 0 clamp(16px, 4vw, 48px);
 }
-.cm-gutters {
-  background: var(--canvas);
-  border-right: none;
-  color: var(--muted);
+/* With line numbers on, text starts a short step after them, like a code editor. */
+.cm-editor .cm-gutters ~ .cm-content .cm-line {
+  padding-left: 12px;
+}
+.cm-editor .cm-gutters {
+  /* Colors are set in the editor theme (Editor.tsx). */
   font-family: var(--font-mono);
   font-size: 12px;
-}
-.cm-activeLineGutter {
-  background: transparent;
-  color: var(--steel);
-}
-.cm-activeLine {
-  background: color-mix(in srgb, var(--hover) 60%, transparent);
+  padding-left: 8px;
 }
 .cm-cursor,
 .cm-dropCursor {

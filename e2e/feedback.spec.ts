@@ -1,7 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
-import { freshApp, mod, prompt, waitSaved } from './helpers';
+import { freshApp, mod, prompt, waitSaved, withoutFileSystemAccess } from './helpers';
 
 // Regression tests for the issues found in the first round of user testing.
+
+test.beforeEach(({ page }) => withoutFileSystemAccess(page));
 
 async function importFiles(
   page: Page,

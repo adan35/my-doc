@@ -1,5 +1,4 @@
 import type { EntryId } from '@/domain/types';
-import { isTextType, fileTypeOf } from '@/domain/names';
 import { KnowledgeIndex } from './knowledge';
 import { SearchIndex } from './search';
 import type { Workspace, WorkspaceEvent } from './workspace';
@@ -44,7 +43,7 @@ export class WorkspaceSession {
         id: e.id,
         name: e.name,
         path,
-        content: e.kind === 'file' && isTextType(fileTypeOf(e.name)) ? text : '',
+        content: this.workspace.isEditable(e) ? text : '',
         tags: this.knowledge.tagsOf(e.id).join(' '),
       });
     }
@@ -69,7 +68,7 @@ export class WorkspaceSession {
       id,
       e.name,
       path,
-      e.kind === 'file' && isTextType(fileTypeOf(e.name)) ? text : '',
+      this.workspace.isEditable(e) ? text : '',
       this.knowledge.tagsOf(id),
     );
   }

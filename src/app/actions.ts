@@ -11,6 +11,7 @@ import { useUi } from './ui-store';
 import { useSettings } from './settings-store';
 import { exportFile, exportHtml, exportZip } from './exporter';
 import { importItems, type ImportItem } from './importer';
+import { diskLinks } from './disk-links';
 
 /**
  * User-facing commands. Each one handles its own confirmation, errors and
@@ -289,6 +290,9 @@ export async function runImport(items: ImportItem[], targetId: EntryId | null = 
       dialogs.conflict({ name, count: remaining }),
     );
     dismissToast(progressToast);
+    for (const { id, handle } of result.diskLinks) await diskLinks.link(id, handle);
+    // Ask for write access while the picker's click still counts as a user gesture.
+    void diskLinks.requestAll(result.diskLinks.map((l) => l.id));
     if (targetId) appActions.setExpanded(targetId, true);
     const parts = [`${result.files} file${result.files === 1 ? '' : 's'}`];
     if (result.folders) parts.push(`${result.folders} folder${result.folders === 1 ? '' : 's'}`);

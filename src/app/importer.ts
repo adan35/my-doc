@@ -10,7 +10,7 @@ export const MAX_IMPORT_TOTAL_BYTES = 1024 * 1024 * 1024;
 const MAX_ZIP_BYTES = 200 * 1024 * 1024;
 
 /** Paths that are never useful to import (OS junk, VCS internals, dependency folders). */
-const IGNORED_SEGMENTS = new Set([
+export const IGNORED_SEGMENTS = new Set([
   '.git',
   'node_modules',
   '__MACOSX',
@@ -25,6 +25,8 @@ export interface ImportItem {
   /** Path relative to the import root, using `/`. */
   path: string;
   file: Blob & { name?: string };
+  /** The file on disk, when the browser gave us a writable handle (File System Access API). */
+  handle?: FileSystemFileHandle;
 }
 
 export interface ImportResult {
@@ -33,6 +35,8 @@ export interface ImportResult {
   replaced: number;
   skipped: { path: string; reason: string }[];
   firstFileId?: EntryId;
+  /** Imported text files that can be saved back to their original file on disk. */
+  diskLinks: { id: EntryId; handle: FileSystemFileHandle }[];
 }
 
 export type ConflictResolver = (name: string, count: number) => Promise<ConflictChoice>;
@@ -106,12 +110,12 @@ export async function importItems(
   resolveConflict: ConflictResolver,
   onProgress?: (done: number, total: number) => void,
 ): Promise<ImportResult> {
-  const result: ImportResult = { files: 0, folders: 0, replaced: 0, skipped: [] };
+  const result: ImportResult = { files: 0, folders: 0, replaced: 0, skipped: [], diskLinks: [] };
   const expanded = await expandZips(rawItems);
   result.skipped.push(...expanded.skipped);
 
   // Normalize and validate paths before touching the workspace.
-  const items: { segments: string[]; file: Blob }[] = [];
+  const items: { segments: string[]; file: Blob; handle?: FileSystemFileHandle }[] = [];
   let total = 0;
   for (const item of expanded.items) {
     const normalized = normalizePath(item.path);
@@ -130,7 +134,7 @@ export async function importItems(
       result.skipped.push({ path: normalized, reason: 'Import is larger than 1 GB.' });
       continue;
     }
-    items.push({ segments, file: item.file });
+    items.push({ segments, file: item.file, handle: item.handle });
   }
 
   const folderCache = new Map<string, EntryId | null>([['', targetId]]);
@@ -161,11 +165,23 @@ export async function importItems(
   // large imports linear instead of rebuilding indexes after every file.
   const BATCH = 250;
   let done = 0;
-  let pending: { parentId: EntryId | null; name: string; content: FileContent }[] = [];
+  let pending: {
+    parentId: EntryId | null;
+    name: string;
+    content: FileContent;
+    handle?: FileSystemFileHandle;
+  }[] = [];
   const pendingNames = new Set<string>();
   const flush = async () => {
     if (!pending.length) return;
-    const created = await ws.createFiles(pending);
+    const created = await ws.createFiles(
+      pending.map(({ parentId, name, content }) => ({ parentId, name, content })),
+    );
+    created.forEach((e, i) => {
+      const handle = pending[i]?.handle;
+      if (handle && typeof pending[i]?.content === 'string')
+        result.diskLinks.push({ id: e.id, handle });
+    });
     result.files += created.length;
     result.firstFileId ??= created[0]?.id;
     done += created.length;
@@ -175,7 +191,7 @@ export async function importItems(
   };
 
   let applyAll: ConflictChoice | null = null;
-  for (const { segments, file } of items) {
+  for (const { segments, file, handle } of items) {
     const name = segments[segments.length - 1]!;
     const parentId = await folderFor(segments.slice(0, -1));
     const text = await readAsTextIfText(file, name);
@@ -203,6 +219,7 @@ export async function importItems(
       }
       if (choice.action === 'replace') {
         await ws.replaceContent(clash.id, content);
+        if (handle && text !== null) result.diskLinks.push({ id: clash.id, handle });
         result.replaced++;
         result.firstFileId ??= clash.id;
         done++;
@@ -210,7 +227,7 @@ export async function importItems(
         continue;
       }
     }
-    pending.push({ parentId, name, content });
+    pending.push({ parentId, name, content, handle });
     pendingNames.add(`${parentId}/${name.toLowerCase()}`);
     if (pending.length >= BATCH) await flush();
   }

@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { EntryId } from '@/domain/types';
-import { fileTypeOf, isTextType } from '@/domain/names';
 import { useApp, ws } from './app-store';
 import { useSettings } from './settings-store';
 import { prefs } from './prefs';
@@ -113,7 +112,7 @@ export const editorActions = {
       activeId: opts.activate === false ? s.activeId : id,
     }));
     persistTabs();
-    if (ws().isTextEntry(entry) && isTextType(fileTypeOf(entry.name))) await loadBuffer(id);
+    if (ws().isEditable(entry)) await loadBuffer(id);
   },
 
   requestFocus(id: EntryId, opts: { find?: string[]; end?: boolean } = {}) {
@@ -302,7 +301,7 @@ export const editorActions = {
     });
     for (const id of live) {
       const e = tree.get(id)!;
-      if (s.workspace.isTextEntry(e) && isTextType(fileTypeOf(e.name))) void loadBuffer(id);
+      if (s.workspace.isEditable(e)) void loadBuffer(id);
     }
   },
 

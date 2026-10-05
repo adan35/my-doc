@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { appActions, useApp } from '@/app/app-store';
 import { editorActions, writeRecoveryDrafts } from '@/app/editor-store';
+import { diskLinks, useDiskLinks } from '@/app/disk-links';
 import { useRouter, navigate } from '@/app/router';
 import { AppShell } from './layout/AppShell';
 import { DialogHost } from './dialogs/DialogHost';
@@ -24,6 +25,8 @@ function useLifecycle() {
   useEffect(() => {
     if (!session) return;
     let cancelled = false;
+    const workspace = session.workspace;
+    void diskLinks.load(workspace.id, (id) => !!workspace.get(id));
     void editorActions.restoreSession().then(() => {
       if (cancelled) return;
       // Validate the deep-linked document after restore.
@@ -34,6 +37,18 @@ function useLifecycle() {
     const unsub = session.workspace.subscribe((e) => {
       if (e.type === 'content' && e.source === 'external') editorActions.onExternalContent(e.ids);
       if (e.type === 'tree') editorActions.onTreeChange();
+      // Every saved change to a linked document is written back to its file on disk.
+      if (e.type === 'content') {
+        for (const id of e.ids) {
+          const text = diskLinks.isLinked(id) ? workspace.allTexts().get(id) : undefined;
+          if (text !== undefined) void diskLinks.write(id, text);
+        }
+      }
+      if (e.type === 'tree') {
+        for (const id of Object.keys(useDiskLinks.getState().links)) {
+          if (!workspace.get(id)) void diskLinks.unlink(id);
+        }
+      }
     });
     return () => {
       cancelled = true;

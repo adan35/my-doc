@@ -132,6 +132,17 @@ export class Workspace {
     return e.kind === 'file' && e.encoding !== 'binary';
   }
 
+  /**
+   * Whether a file opens in the text editor. Decided by its stored content, not its
+   * extension, so dotfiles and unfamiliar extensions (`.editorconfig`, `.env.local`,
+   * `Makefile`) stay editable. Images keep their image view even when stored as text (SVG).
+   */
+  isEditable(e: Entry): boolean {
+    if (!this.isTextEntry(e)) return false;
+    const type = fileTypeOf(e.name);
+    return type !== 'image' && type !== 'pdf';
+  }
+
   // ---------------------------------------------------------------- helpers
 
   private assertName(name: string): string {
