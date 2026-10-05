@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { restoreFocus } from '../focus';
 
 interface Props {
   title: string;
@@ -60,7 +61,7 @@ export function Dialog({
     el.addEventListener('keydown', onKey);
     return () => {
       el.removeEventListener('keydown', onKey);
-      previous?.focus?.();
+      restoreFocus(previous);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

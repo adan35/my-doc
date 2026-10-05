@@ -29,6 +29,7 @@ import {
   RotateCcw,
   Copy,
   Tag,
+  Table,
 } from 'lucide-react';
 import * as A from '@/app/actions';
 import { ws } from '@/app/app-store';
@@ -74,7 +75,7 @@ export function getCommands(): Command[] {
       title: 'New document from template',
       group: 'Create',
       icon: <LayoutTemplate />,
-      keywords: 'readme meeting notes daily todo api research',
+      keywords: 'readme meeting notes lecture class daily todo api research',
       run: () => void A.newFromTemplate(),
     },
     {
@@ -290,6 +291,18 @@ export function getCommands(): Command[] {
         shortcut: SHORTCUTS.find,
         run: () => sendDocCommand('find'),
       },
+      ...(isMarkdownName(doc.name)
+        ? [
+            {
+              id: 'insert-table',
+              title: 'Insert table',
+              group: 'Document' as const,
+              icon: <Table />,
+              keywords: 'grid columns rows',
+              run: () => sendDocCommand('insert-table'),
+            },
+          ]
+        : []),
       {
         id: 'export-doc',
         title: 'Export document',

@@ -130,9 +130,13 @@ export function FileTree() {
       if (entry.kind === 'folder') appActions.setExpanded(entry.id, !row.expanded);
       else void A.openEntry(entry.id);
     } else if (key === 'F2') void A.renameEntry(entry.id);
-    else if (key === 'Delete' || (key === 'Backspace' && (e.metaKey || e.ctrlKey)))
-      void A.trashEntries([entry.id]);
-    else if (key === 'ContextMenu' || (key === 'F10' && e.shiftKey)) {
+    else if (key === 'Delete' || (key === 'Backspace' && (e.metaKey || e.ctrlKey))) {
+      // Keep focus in the tree: move to the next row outside this item, else the previous one.
+      const depth = row.depth;
+      const after = rows.slice(i + 1).find((r) => r.depth <= depth);
+      const neighbor = after ?? rows[i - 1];
+      void A.trashEntries([entry.id]).then(() => neighbor && focusRow(neighbor.entry.id));
+    } else if (key === 'ContextMenu' || (key === 'F10' && e.shiftKey)) {
       const el = e.target as HTMLElement;
       openMenuAt(el, entryMenu(entry), entry.name);
     } else return;

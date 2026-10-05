@@ -1,7 +1,7 @@
 import { editorActions } from '@/app/editor-store';
 import { openEntry } from '@/app/actions';
 
-export type DocCommand = 'find' | 'toggle-mode' | 'split' | 'focus-editor';
+export type DocCommand = 'find' | 'toggle-mode' | 'split' | 'focus-editor' | 'insert-table';
 
 /** Sends a command to the active document view (it owns the editor instance). */
 export function sendDocCommand(cmd: DocCommand) {

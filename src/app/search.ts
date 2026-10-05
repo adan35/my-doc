@@ -14,6 +14,9 @@ interface IndexedDoc {
   tags: string;
 }
 
+/** Plain-text versions of Markdown content for snippets, built on first use. */
+const plainCache = new WeakMap<IndexedDoc, string>();
+
 export interface SearchFilters {
   types?: FileType[];
   folderId?: EntryId | null;
@@ -115,7 +118,7 @@ export class SearchIndex {
         score: r.score,
         fields,
         terms: r.terms,
-        snippet: doc && fields.includes('content') ? makeSnippet(doc.content, r.terms) : undefined,
+        snippet: doc && fields.includes('content') ? snippetFor(doc, r.terms) : undefined,
       });
       if (hits.length >= limit) break;
     }
@@ -128,6 +131,50 @@ export class SearchIndex {
       .search(query, { fields: ['name', 'path'], prefix: true, fuzzy: 0.2, combineWith: 'AND' })
       .map((r) => r.id as EntryId);
   }
+}
+
+function snippetFor(doc: IndexedDoc, terms: string[]): Snippet | undefined {
+  if (!/\.(md|markdown|mdx)$/i.test(doc.name)) return makeSnippet(doc.content, terms);
+  let plain = plainCache.get(doc);
+  if (plain === undefined) {
+    plain = markdownToPlainText(doc.content);
+    plainCache.set(doc, plain);
+  }
+  return makeSnippet(plain, terms) ?? makeSnippet(doc.content, terms);
+}
+
+/** Drops Markdown syntax (front matter, markers, link targets, HTML) so snippets read as prose. */
+export function markdownToPlainText(src: string): string {
+  const out: string[] = [];
+  let lines = src.split(/\r?\n/);
+  if (lines[0]?.trim() === '---') {
+    const close = lines.findIndex((l, i) => i > 0 && /^(---|\.\.\.)\s*$/.test(l));
+    if (close > 0) lines = lines.slice(close + 1);
+  }
+  for (const raw of lines) {
+    let line = raw;
+    if (/^\s*(```|~~~)/.test(line)) continue;
+    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)) continue;
+    if (/^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(line)) continue;
+    line = line
+      .replace(/^\s*(>\s?)+/, '')
+      .replace(/^\s*#{1,6}\s+/, '')
+      .replace(/^\s*([-*+]|\d+[.)])\s+(\[[ xX]\]\s+)?/, '')
+      .replace(
+        /!?\[\[([^\]|#\n]+)(#[^\]|\n]*)?(?:\|([^\]\n]*))?\]\]/g,
+        (_m, t: string, _f, a?: string) => (a || t).trim(),
+      )
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/\[\^[^\]]+\]/g, '')
+      .replace(/<[^>\n]+>/g, ' ')
+      .replace(/\*\*|__|~~|`+|\$\$?/g, '')
+      .replace(/(^|[^\w*])[*_](?=\S)/g, '$1')
+      .replace(/(\S)[*_](?=[^\w*]|$)/g, '$1')
+      .replace(/\s*\|\s*/g, ' · ')
+      .replace(/^ · | · $/g, '');
+    out.push(line);
+  }
+  return out.join('\n');
 }
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -174,4 +221,19 @@ export function makeSnippet(content: string, terms: string[], radius = 70): Snip
     text: `${start > 0 ? '…' : ''}${text}${end < content.length ? '…' : ''}`,
     highlights: start > 0 ? highlights.map(([a, b]) => [a + 1, b + 1]) : highlights,
   };
+}
+
+/** The first case-insensitive occurrence of any of the terms (longest first), for jumping to a hit. */
+export function findFirstMatch(text: string, terms: string[]): { from: number; to: number } | null {
+  const words = terms.filter(Boolean);
+  if (!words.length) return null;
+  const re = new RegExp(
+    words
+      .sort((a, b) => b.length - a.length)
+      .map(escapeRe)
+      .join('|'),
+    'iu',
+  );
+  const m = re.exec(text);
+  return m ? { from: m.index, to: m.index + m[0].length } : null;
 }

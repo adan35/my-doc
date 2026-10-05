@@ -5,12 +5,14 @@ import type { EntryId } from '@/domain/types';
 import { useUi } from '@/app/ui-store';
 import { useApp } from '@/app/app-store';
 import { openEntry } from '@/app/actions';
+import { editorActions } from '@/app/editor-store';
 import { navigate } from '@/app/router';
 import { FileIcon } from '../components/FileIcon';
 import { Highlight } from '../components/Highlight';
 import { fuzzyScore } from '../components/fuzzy';
 import { formatShortcut, relativeTime, useTree } from '../hooks';
 import { getCommands } from '../commands';
+import { restoreFocusIfLost } from '../focus';
 
 interface Item {
   key: string;
@@ -44,6 +46,10 @@ function PaletteFrame({
   const listRef = useRef<HTMLDivElement>(null);
   const close = () => useUi.getState().setOverlay(null);
   useEffect(() => setIndex(0), [query]);
+  useEffect(() => {
+    const previous = document.activeElement;
+    return () => restoreFocusIfLost(previous);
+  }, []);
   useEffect(() => {
     listRef.current?.querySelector(`[data-index="${index}"]`)?.scrollIntoView({ block: 'nearest' });
   }, [index]);
@@ -211,7 +217,10 @@ export function QuickOpen() {
           !q && e.updatedAt ? (
             <span className="text-xs text-stone">{relativeTime(e.updatedAt)}</span>
           ) : undefined,
-        run: () => void openEntry(id),
+        run: () => {
+          if (e.kind === 'file') editorActions.requestFocus(id);
+          void openEntry(id);
+        },
       };
     };
     if (!q) {

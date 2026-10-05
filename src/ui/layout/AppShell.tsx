@@ -144,6 +144,11 @@ export function AppShell() {
     >
       <a
         href="#main"
+        onClick={(e) => {
+          // The app uses hash routes, so following "#main" would leave the page.
+          e.preventDefault();
+          document.getElementById('main')?.focus();
+        }}
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[90] focus:rounded-md focus:bg-ink focus:px-3 focus:py-2 focus:text-canvas"
       >
         Skip to content
@@ -233,7 +238,7 @@ export function AppShell() {
             <PanelLeft size={16} />
           </button>
         )}
-        <main id="main" className="min-h-0 flex-1" tabIndex={-1}>
+        <main id="main" className="min-h-0 flex-1 outline-none" tabIndex={-1}>
           <RouteView />
         </main>
         {phone && !immersive && <MobileNav />}

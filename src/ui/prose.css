@@ -126,12 +126,24 @@
   display: block;
 }
 .prose .task-list-item-checkbox {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   margin: 0 0.5em 0 0;
-  vertical-align: -2px;
+  vertical-align: -3px;
   accent-color: var(--primary);
   cursor: pointer;
+}
+/* Touch: a bigger box, and the whole row is the tap target (see Preview.tsx). */
+@media (pointer: coarse) {
+  .prose .task-list-item-checkbox {
+    width: 22px;
+    height: 22px;
+    vertical-align: -5px;
+  }
+  .prose .task-list-item {
+    min-height: 44px;
+    padding: 8px 0;
+  }
 }
 .prose blockquote {
   border-left: 3px solid var(--ink);

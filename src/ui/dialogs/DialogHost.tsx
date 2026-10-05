@@ -119,7 +119,7 @@ function ConfirmDialog({ req }: { req: Extract<DialogRequest, { kind: 'confirm' 
       title={options.title}
       description={options.message}
       onClose={() => resolve(false)}
-      initialFocus={options.danger ? cancel : undefined}
+      initialFocus={options.danger || options.cancelLabel ? cancel : undefined}
       footer={
         <>
           <button
@@ -128,7 +128,7 @@ function ConfirmDialog({ req }: { req: Extract<DialogRequest, { kind: 'confirm' 
             className="btn btn-secondary"
             onClick={() => resolve(false)}
           >
-            Cancel
+            {options.cancelLabel ?? 'Cancel'}
           </button>
           <button
             type="button"

@@ -77,6 +77,22 @@ describe('Workspace', () => {
     expect(await ws.readText(api.id)).toBe('# API\n\nBack to [readme](../docs/README.md).');
   });
 
+  it('rewrites ![[embeds]] of notes and images on rename', async () => {
+    await ws.createFile(null, 'Methodology.md', '# Methodology\n\n## Sampling\n');
+    const pic = await ws.createFile(null, 'photo.png', '');
+    const note = await ws.createFile(
+      null,
+      'Notes.md',
+      '![[Methodology#Sampling]] and [[Methodology]] and ![[photo.png]]',
+    );
+    const methodology = ws.tree.findByPath('Methodology.md')!;
+    await ws.rename(methodology.id, 'Methods.md');
+    await ws.rename(pic.id, 'site.png');
+    expect(await ws.readText(note.id)).toBe(
+      '![[Methods#Sampling]] and [[Methods]] and ![[site.png]]',
+    );
+  });
+
   it('refuses to move a folder into its own descendant', async () => {
     const a = await ws.createFolder(null, 'A');
     const b = await ws.createFolder(a.id, 'B');

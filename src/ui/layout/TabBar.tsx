@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { useEditor, editorActions } from '@/app/editor-store';
 import { navigate, useRouter } from '@/app/router';
 import { appActions } from '@/app/app-store';
-import { openEntry } from '@/app/actions';
+import { closeTab, openEntry } from '@/app/actions';
 import { SHORTCUTS } from '@/app/shortcuts';
 import { FileIcon } from '../components/FileIcon';
 import { openMenu } from '../components/Menu';
@@ -21,12 +21,12 @@ export function TabBar() {
   const onDoc = route.name === 'doc';
 
   const close = async (id: string) => {
-    const wasActive = id === activeId && onDoc;
-    await editorActions.close(id);
-    if (wasActive) {
-      const next = useEditor.getState().activeId;
-      navigate(next ? { name: 'doc', id: next } : { name: 'home' }, { replace: true });
-    }
+    const hadFocus = !!document.activeElement?.closest('[role="tablist"]');
+    await closeTab(id);
+    if (hadFocus)
+      requestAnimationFrame(() =>
+        document.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.focus(),
+      );
   };
 
   return (

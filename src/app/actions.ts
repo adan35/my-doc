@@ -8,6 +8,7 @@ import { editorActions, useEditor } from './editor-store';
 import { navigate, useRouter } from './router';
 import { toast, toastError, useToasts } from './toast-store';
 import { useUi } from './ui-store';
+import { useSettings } from './settings-store';
 import { exportFile, exportHtml, exportZip } from './exporter';
 import { importItems, type ImportItem } from './importer';
 
@@ -61,11 +62,17 @@ export async function newDocument(
 ) {
   const template = TEMPLATES.find((t) => t.id === (templateId ?? 'blank')) ?? TEMPLATES[0]!;
   const title = expandTemplate(template.fileName, { title: '' }) || 'Untitled';
+  // Keys typed while the document is created must not press the "New document" button again.
+  if (document.activeElement instanceof HTMLButtonElement) document.activeElement.blur();
   return guard('Unable to create the document.', async () => {
     const name = ws().freeName(parentId, `${title}.md`);
     const body = expandTemplate(template.body, { title: baseName(name), date: isoDate() });
     const entry = await ws().createFile(parentId, name, body);
     if (parentId) appActions.setExpanded(parentId, true);
+    // A new document is for writing: open it in the editor with the cursor in place.
+    if (useSettings.getState().defaultViewMode === 'preview')
+      useUi.getState().setViewMode(entry.id, 'edit');
+    editorActions.requestFocus(entry.id, { end: true });
     await openEntry(entry.id);
     return entry;
   });
@@ -105,12 +112,48 @@ export async function renameEntry(id: EntryId) {
     validate: nameValidator,
   });
   if (!name || name === e.name) return;
-  return renameTo(id, name);
+  return renameTo(id, await keepExtension(e.name, name));
+}
+
+/**
+ * Typing a name without an extension keeps the current one, so "Notes" stays a
+ * Markdown document. Changing the extension on purpose asks first, because it
+ * changes how the file opens.
+ */
+async function keepExtension(oldName: string, newName: string): Promise<string> {
+  const oldExt = extensionOf(oldName);
+  if (!oldExt) return newName;
+  const newExt = extensionOf(newName);
+  // "Report 2.0" or "v1.final" have a dot but no real extension.
+  if (!/^[a-z][a-z0-9]{0,7}$/.test(newExt)) return `${newName}.${oldExt}`;
+  if (newExt.toLowerCase() === oldExt.toLowerCase()) return newName;
+  const ok = await dialogs.confirm({
+    title: `Change the file type to .${newExt}?`,
+    message: `"${newName}" will no longer open as a .${oldExt} file. Keep .${oldExt} to leave it as it is.`,
+    confirmLabel: `Use .${newExt}`,
+    cancelLabel: `Keep .${oldExt}`,
+  });
+  return ok ? newName : `${newName}.${oldExt}`;
 }
 
 export async function renameTo(id: EntryId, name: string) {
   await editorActions.flushAll();
   return guard('Unable to rename.', () => ws().rename(id, name));
+}
+
+/** Closes a tab. Leaves the document first so the view doesn't reopen it while closing. */
+export async function closeTab(id: EntryId) {
+  await editorActions.flush(id);
+  const route = useRouter.getState().route;
+  const b = useEditor.getState().buffers[id];
+  const dirty = !!b && b.status !== 'loading' && b.text !== b.savedText;
+  if (!dirty && route.name === 'doc' && route.id === id) {
+    const { tabs } = useEditor.getState();
+    const rest = tabs.filter((t) => t !== id);
+    const next = rest[Math.min(tabs.indexOf(id), rest.length - 1)];
+    navigate(next ? { name: 'doc', id: next } : { name: 'home' }, { replace: true });
+  }
+  await editorActions.close(id);
 }
 
 export async function moveEntries(ids: EntryId[], targetId?: EntryId | null) {

@@ -41,7 +41,8 @@
   --hover: rgba(55, 53, 47, 0.06);
   --active: rgba(55, 53, 47, 0.1);
   --selection: rgba(35, 131, 226, 0.16);
-  --focus: rgba(86, 69, 212, 0.45);
+  /* Opaque so focus rings keep 3:1 contrast against any surface (WCAG 2.4.11). */
+  --focus: #5645d4;
   --code-bg: #f6f5f4;
   --mark: #fef7d6;
   --mark-ink: #523410;
@@ -83,7 +84,7 @@
   --hover: rgba(255, 255, 255, 0.055);
   --active: rgba(255, 255, 255, 0.09);
   --selection: rgba(90, 169, 245, 0.25);
-  --focus: rgba(124, 109, 242, 0.6);
+  --focus: #9d8fff;
   --code-bg: #232323;
   --mark: #4a3f14;
   --mark-ink: #f9e79f;
@@ -167,6 +168,18 @@
   }
   button {
     cursor: pointer;
+  }
+  /* Code fonts show the characters as typed: "!=" stays "!=", not "≠". */
+  code,
+  pre,
+  kbd,
+  samp {
+    font-variant-ligatures: none;
+  }
+  /* Search fields draw their own clear button. */
+  input[type='search']::-webkit-search-cancel-button,
+  input[type='search']::-webkit-search-decoration {
+    appearance: none;
   }
   button:disabled {
     cursor: default;

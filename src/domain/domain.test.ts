@@ -118,6 +118,13 @@ describe('links', () => {
       ['wiki', 'Wiki Page', undefined],
     ]);
   });
+  it('treats ![[embeds]] as wiki links', () => {
+    const links = extractLinks('![[photo.png]] ![[Note#Part]]');
+    expect(links.map((l) => [l.kind, l.target, l.fragment, l.embed])).toEqual([
+      ['wiki', 'photo.png', undefined, true],
+      ['wiki', 'Note', 'Part', true],
+    ]);
+  });
   it('rewrites link targets in place', () => {
     const out = rewriteLinks('see [a](./a.md#x) and [[A]]', (l) =>
       l.kind === 'markdown' ? '../b/a.md' : 'B',

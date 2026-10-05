@@ -80,6 +80,16 @@ describe('wiki links', () => {
     expect(html).toContain('<code>[[code]]</code>');
   });
 
+  it('renders ![[image]] embeds as images and ![[Note]] as a link', () => {
+    const { html } = renderMarkdown('![[site photo.png|Site]] and ![[Methods]]');
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const img = doc.querySelector('img')!;
+    expect(img.getAttribute('data-wiki')).toBe('site photo.png');
+    expect(img.getAttribute('alt')).toBe('Site');
+    expect(doc.querySelector('a.wiki-link')?.textContent).toBe('Methods');
+    expect(doc.body.textContent).not.toContain('!');
+  });
+
   it('cannot smuggle markup through a wiki link', () => {
     const { html } = renderMarkdown('[[<img src=x onerror=alert(1)>|"><script>x</script>]]');
     const doc = new DOMParser().parseFromString(html, 'text/html');

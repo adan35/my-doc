@@ -469,10 +469,13 @@ export class Workspace {
         if (link.kind === 'wiki') {
           const target = resolveWikiLink(oldTree, link.target);
           if (!target) return null;
-          const newBase = baseName(newTree.get(target.id)!.name);
-          const wroteBase = !link.target.includes('/');
-          if (wroteBase && baseName(target.name) !== newBase) return newBase;
-          return null;
+          if (link.target.includes('/')) return null;
+          const newName = newTree.get(target.id)!.name;
+          // [[photo.png]] was written with its extension; [[Note]] without.
+          if (link.target.trim().toLowerCase() === target.name.toLowerCase())
+            return newName === target.name ? null : newName;
+          const newBase = baseName(newName);
+          return baseName(target.name) !== newBase ? newBase : null;
         }
         const resolved = resolvePath(oldDir, link.target);
         if (resolved === null) return null;

@@ -5,6 +5,8 @@ import { session } from '@/app/app-store';
 import { navigate } from '@/app/router';
 import { openEntry } from '@/app/actions';
 import { prefs } from '@/app/prefs';
+import { editorActions } from '@/app/editor-store';
+import type { SearchHit } from '@/app/search';
 import { Page } from '../components/Page';
 import { FileIcon } from '../components/FileIcon';
 import { Highlight } from '../components/Highlight';
@@ -17,6 +19,12 @@ const TYPE_FILTERS: { label: string; types: FileType[] }[] = [
   { label: 'Images', types: ['image'] },
   { label: 'Other', types: ['pdf', 'binary'] },
 ];
+
+/** Opens a result and, for content matches, jumps to the first match. */
+function openHit(hit: SearchHit) {
+  if (hit.fields.includes('content')) editorActions.requestFocus(hit.id, { find: hit.terms });
+  void openEntry(hit.id);
+}
 
 export function SearchView({ q }: { q: string }) {
   const tree = useTree()!;
@@ -90,7 +98,7 @@ export function SearchView({ q }: { q: string }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && results.hits[0]) void openEntry(results.hits[0].id);
+            if (e.key === 'Enter' && results.hits[0]) openHit(results.hits[0]);
           }}
         />
         {query && (
@@ -176,8 +184,8 @@ export function SearchView({ q }: { q: string }) {
           </p>
         )
       ) : (
-        <section aria-live="polite">
-          <p className="mb-2 text-caption text-steel">
+        <section>
+          <p className="mb-2 text-caption text-steel" aria-live="polite">
             {results.hits.length === 100
               ? 'Top 100 results'
               : `${results.hits.length} result${results.hits.length === 1 ? '' : 's'}`}{' '}
@@ -206,7 +214,7 @@ export function SearchView({ q }: { q: string }) {
                     <button
                       type="button"
                       className="flex w-full items-start gap-3 px-3 py-3 text-left hover:bg-surface-soft"
-                      onClick={() => void openEntry(hit.id)}
+                      onClick={() => openHit(hit)}
                     >
                       <FileIcon entry={e} className="mt-0.5 shrink-0 text-steel" />
                       <span className="min-w-0 flex-1">

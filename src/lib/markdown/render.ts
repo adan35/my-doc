@@ -18,6 +18,8 @@ const escapeHtml = (s: string) =>
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
   );
 
+const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|avif|bmp|ico)$/i;
+
 /** CommonJS plugins may arrive wrapped in `{ default }` depending on the bundler. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const plugin = <T>(mod: T): T => ((mod as any)?.default ?? mod) as T;
@@ -101,6 +103,28 @@ function createRenderer(): MarkdownIt {
       if (fragment) open.attrPush(['data-fragment', fragment]);
       state.push('text', '', 0).content = label;
       state.push('link_close', 'a', -1);
+    }
+    state.pos += m[0].length;
+    return true;
+  });
+
+  // ![[image.png]] embeds an image found by name; ![[Note]] links to the note.
+  md.inline.ruler.before('image', 'wikiembed', (state, silent) => {
+    const src = state.src;
+    const start = state.pos;
+    if (src.charCodeAt(start) !== 0x21 || !src.startsWith('[[', start + 1)) return false;
+    const m = /^!\[\[([^\]|#\n]+)(?:#[^\]|\n]*)?(?:\|([^\]\n]*))?\]\]/.exec(src.slice(start));
+    if (!m) return false;
+    const target = m[1]!.trim();
+    if (!IMAGE_EXT.test(target)) {
+      // Not an image: drop the "!" and let the wiki link rule render a link to the note.
+      state.pos += 1;
+      return true;
+    }
+    if (!silent) {
+      const alt = m[2]?.trim() && !/^\d+(x\d+)?$/.test(m[2].trim()) ? m[2].trim() : target;
+      const token = state.push('html_inline', '', 0);
+      token.content = `<img src="${escapeHtml(encodeURI(target))}" alt="${escapeHtml(alt)}" data-wiki="${escapeHtml(target)}">`;
     }
     state.pos += m[0].length;
     return true;
