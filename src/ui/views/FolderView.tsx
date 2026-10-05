@@ -216,7 +216,8 @@ export function FolderView({ id }: { id: EntryId | null }) {
       >
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <input
-            className="input h-8 max-w-[240px] flex-1"
+            type="search"
+            className="input h-8 min-w-0 basis-full sm:max-w-[240px] sm:flex-1 sm:basis-auto"
             placeholder="Filter by name"
             aria-label="Filter by name"
             value={filter}

@@ -15,7 +15,7 @@ Your documents stay plain Markdown and text. Everything My Doc adds, like tags a
 
 **Writing and reading**
 
-- A CodeMirror 6 editor with Markdown highlighting, find and replace, formatting shortcuts, optional line numbers, word wrap and tab size.
+- A CodeMirror 6 editor with Markdown highlighting, find and replace, a formatting toolbar (headings, lists, checklists, links, tables, equations) and shortcuts, a monospace or sans-serif font, optional line numbers, word wrap and tab size.
 - Edit, Split and Preview modes per document, plus Focus mode and Reading mode.
 - The preview supports GitHub-style Markdown: tables, task lists (clickable), footnotes, KaTeX math, Mermaid diagrams, syntax-highlighted code with a copy button, and YAML front matter.
 - Paste or drop an image into a document to save it in an `assets/` folder next to the document and link it.
@@ -31,17 +31,17 @@ Your documents stay plain Markdown and text. Everything My Doc adds, like tags a
 **Finding things**
 
 - Quick open (Ctrl/Cmd + P) with fuzzy matching on names and paths.
-- Full-text search (Ctrl/Cmd + Shift + F) with typo tolerance, highlighted snippets, and filters by type, folder and tag.
+- Full-text search (Ctrl/Cmd + Shift + F) with typo tolerance, highlighted plain-text snippets, and filters by type, folder and tag. Opening a result jumps to the first match.
 - Command palette (Ctrl/Cmd + K) for every command.
 - Home screen with recent documents, favorites and quick actions.
 
 **Knowledge**
 
-- Relative Markdown links (`[x](./notes/a.md)`) and wiki links (`[[Name]]`, `[[Name#Section]]`, `[[Name|Label]]`) open the target document. Broken links are marked.
+- Relative Markdown links (`[x](./notes/a.md)`) and wiki links (`[[Name]]`, `[[Name#Section]]`, `[[Name|Label]]`) open the target document. Broken links are marked. `![[image.png]]` embeds an image found by name.
 - Renaming or moving a document rewrites the links that point to it.
 - Backlinks, outgoing links and broken links appear in the side panel.
 - Tags from `#tag` in text or `tags:` in front matter, with a tag browser. You can add, remove and rename tags across documents.
-- Eight document templates (meeting notes, project plan, and others).
+- Nine document templates (meeting notes, lecture notes, project plan, and others).
 
 **Import and export**
 

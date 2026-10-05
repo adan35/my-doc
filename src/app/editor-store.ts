@@ -19,11 +19,22 @@ export interface Buffer {
   rev: number;
 }
 
+/** Asks the document view to move keyboard focus into a document, optionally at a match. */
+export interface FocusRequest {
+  id: EntryId;
+  /** Search terms: the first match is selected and scrolled into view. */
+  find?: string[];
+  /** Put the cursor at the end (new documents). */
+  end?: boolean;
+  at: number;
+}
+
 interface EditorState {
   tabs: EntryId[];
   activeId: EntryId | null;
   closed: EntryId[];
   buffers: Record<EntryId, Buffer>;
+  focusRequest: FocusRequest | null;
 }
 
 export const useEditor = create<EditorState>(() => ({
@@ -31,6 +42,7 @@ export const useEditor = create<EditorState>(() => ({
   activeId: null,
   closed: [],
   buffers: {},
+  focusRequest: null,
 }));
 
 const get = useEditor.getState;
@@ -102,6 +114,18 @@ export const editorActions = {
     }));
     persistTabs();
     if (ws().isTextEntry(entry) && isTextType(fileTypeOf(entry.name))) await loadBuffer(id);
+  },
+
+  requestFocus(id: EntryId, opts: { find?: string[]; end?: boolean } = {}) {
+    set({ focusRequest: { id, ...opts, at: Date.now() } });
+  },
+
+  /** Returns the pending focus request for a document (if still fresh) and clears it. */
+  takeFocusRequest(id: EntryId): FocusRequest | null {
+    const req = get().focusRequest;
+    if (!req || req.id !== id) return null;
+    set({ focusRequest: null });
+    return Date.now() - req.at < 5000 ? req : null;
   },
 
   activate(id: EntryId | null) {

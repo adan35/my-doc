@@ -78,7 +78,14 @@ export function toggleLinePrefix(view: EditorView, prefix: string): boolean {
       pos = line.to + 1;
     }
   }
-  view.dispatch({ changes, userEvent: 'input.format', scrollIntoView: true });
+  const changeSet = state.changes(changes);
+  view.dispatch({
+    changes: changeSet,
+    // Map forward so a cursor sitting where the prefix goes ends up after it.
+    selection: state.selection.map(changeSet, 1),
+    userEvent: 'input.format',
+    scrollIntoView: true,
+  });
   view.focus();
   return true;
 }
@@ -116,5 +123,23 @@ export function insertTable(view: EditorView): boolean {
   const line = view.state.doc.lineAt(view.state.selection.main.from);
   const lead = line.text.trim() ? '\n\n' : '';
   insertText(view, `${lead}| Column | Column |\n| --- | --- |\n|  |  |\n`);
+  return true;
+}
+
+/** Inserts a display-math block with the cursor inside it. */
+export function insertMathBlock(view: EditorView): boolean {
+  const { state } = view;
+  const { from, to } = state.selection.main;
+  const text = state.sliceDoc(from, to);
+  const line = state.doc.lineAt(from);
+  const lead = from === line.from ? '' : '\n';
+  const insert = `${lead}$$\n${text}\n$$\n`;
+  view.dispatch({
+    changes: { from, to, insert },
+    selection: { anchor: from + lead.length + 3, head: from + lead.length + 3 + text.length },
+    userEvent: 'input.format',
+    scrollIntoView: true,
+  });
+  view.focus();
   return true;
 }

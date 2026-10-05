@@ -15,6 +15,8 @@ export interface ConfirmOptions {
   title: string;
   message: string;
   confirmLabel?: string;
+  /** Label for the safe choice; it gets the initial focus when set. */
+  cancelLabel?: string;
   danger?: boolean;
 }
 

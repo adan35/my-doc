@@ -25,6 +25,7 @@ import {
   closeBrackets,
   closeBracketsKeymap,
   completionKeymap,
+  type Completion,
   type CompletionContext,
   type CompletionResult,
 } from '@codemirror/autocomplete';
@@ -44,12 +45,14 @@ import { useSettings } from '@/app/settings-store';
 import { session, ws } from '@/app/app-store';
 import { saveAttachment } from '@/app/attachments';
 import { toastError } from '@/app/toast-store';
+import { findFirstMatch as findFirst } from '@/app/search';
 import { markdownHighlight } from './highlight';
 import { insertCodeBlock, insertLink, insertText, toggleLinePrefix, toggleWrap } from './commands';
 
 export interface EditorHandle {
   view: EditorView | null;
-  focus(): void;
+  /** Focuses the editor, optionally selecting the first match of `find` or moving to the end. */
+  focus(opts?: { find?: string[]; end?: boolean }): void;
   scrollToLine(line: number): void;
   openSearch(): void;
 }
@@ -85,7 +88,7 @@ function wikiAndTagCompletion(docId: EntryId) {
           .map((e) => ({
             label: baseName(e.name),
             detail: tree.dirOf(e.id) || undefined,
-            apply: `${baseName(e.name)}]]`,
+            apply: applyWikiTarget(baseName(e.name)),
             type: 'text',
           })),
         validFor: /^[^\]\n]*$/,
@@ -105,6 +108,52 @@ function wikiAndTagCompletion(docId: EntryId) {
     return null;
   };
 }
+
+/** Inserts a wiki link target, reusing the `]]` that bracket auto-closing already typed. */
+function applyWikiTarget(target: string) {
+  return (view: EditorView, _c: Completion, from: number, to: number) => {
+    const end = view.state.sliceDoc(to, to + 2) === ']]' ? to + 2 : to;
+    const insert = `${target}]]`;
+    view.dispatch({
+      changes: { from, to: end, insert },
+      selection: { anchor: from + insert.length },
+      userEvent: 'input.complete',
+    });
+  };
+}
+
+const LIST_MARKER = String.raw`(?:[-*+] (?:\[[ xX]\] )?|\d+[.)] )`;
+const DOUBLE_MARKER = new RegExp(String.raw`^(\s*)${LIST_MARKER}(${LIST_MARKER})$`);
+
+/**
+ * Lists continue automatically on Enter, so people who then type the marker
+ * themselves ("- [ ] ") would get it twice. Typing a marker straight after an
+ * automatic one replaces it instead.
+ */
+const dedupeListMarker = EditorView.inputHandler.of((view, from, to, text) => {
+  if (text !== ' ' || from !== to) return false;
+  const line = view.state.doc.lineAt(from);
+  const before = line.text.slice(0, from - line.from) + ' ';
+  if (from !== line.to) return false;
+  const m = DOUBLE_MARKER.exec(before);
+  if (!m) return false;
+  const insert = `${m[1]}${m[2]}`;
+  view.dispatch({
+    changes: { from: line.from, to: line.to, insert },
+    selection: { anchor: line.from + insert.length },
+    userEvent: 'input.type',
+  });
+  return true;
+});
+
+/** Fonts come from CSS variables set by the document view (themes beat CodeMirror's base styles). */
+const fontTheme = EditorView.theme({
+  '.cm-scroller': {
+    fontFamily: 'var(--editor-font, var(--font-mono))',
+    lineHeight: 'var(--editor-line-height, 1.7)',
+  },
+  '.cm-content': { fontVariantLigatures: 'none' },
+});
 
 function settingsExtensions(): Extension[] {
   const s = useSettings.getState();
@@ -146,7 +195,29 @@ export function Editor({
     get view() {
       return viewRef.current;
     },
-    focus: () => viewRef.current?.focus(),
+    focus({ find, end }: { find?: string[]; end?: boolean } = {}) {
+      const view = viewRef.current;
+      if (!view) return;
+      view.focus();
+      if (!find?.length && !end) return;
+      const match = find?.length ? findFirst(view.state.doc.toString(), find) : null;
+      // After the scroll position restored for this document.
+      requestAnimationFrame(() => {
+        if (viewRef.current !== view) return;
+        if (match) {
+          view.dispatch({
+            selection: { anchor: match.from, head: match.to },
+            effects: EditorView.scrollIntoView(match.from, { y: 'center' }),
+          });
+        } else if (end) {
+          view.dispatch({
+            selection: { anchor: view.state.doc.length },
+            scrollIntoView: true,
+          });
+        }
+        view.focus();
+      });
+    },
     scrollToLine(line: number) {
       const view = viewRef.current;
       if (!view) return;
@@ -213,11 +284,17 @@ export function Editor({
     view.setState(state);
     view.dom.dataset.docId = docId;
     view.dom.dataset.rev = String(rev);
-    configureLanguage(view, name);
     const top = scrollCache.get(docId);
     if (top) requestAnimationFrame(() => (view.scrollDOM.scrollTop = top));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docId, rev]);
+
+  // Language, completions and the accessible name follow the file name (renames included).
+  useEffect(() => {
+    const view = viewRef.current;
+    if (view) configureLanguage(view, name);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docId, name]);
 
   // Live settings changes.
   useEffect(
@@ -237,22 +314,25 @@ export function Editor({
   }, [readOnly, docId]);
 
   function configureLanguage(view: EditorView, fileName: string) {
+    const label = EditorView.contentAttributes.of({ 'aria-label': `Edit ${fileName}` });
     if (isMarkdownName(fileName)) {
       view.dispatch({
         effects: langComp.current.reconfigure([
+          label,
           markdown({ base: markdownLanguage, codeLanguages: languages, addKeymap: true }),
           autocompletion({ override: [wikiAndTagCompletion(docId)], icons: false }),
+          dedupeListMarker,
           placeholder('Start writing…'),
         ]),
       });
       return;
     }
     const desc = LanguageDescription.matchFilename(languages, fileName);
-    view.dispatch({ effects: langComp.current.reconfigure([]) });
+    view.dispatch({ effects: langComp.current.reconfigure(label) });
     if (desc) {
       void desc.load().then((support) => {
         if (viewRef.current === view && view.dom.dataset.docId === docId) {
-          view.dispatch({ effects: langComp.current.reconfigure(support) });
+          view.dispatch({ effects: langComp.current.reconfigure([label, support]) });
         }
       });
     }
@@ -275,6 +355,7 @@ export function Editor({
         highlightActiveLine(),
         highlightSelectionMatches(),
         syntaxHighlighting(markdownHighlight),
+        fontTheme,
         search({ top: true }),
         settingsComp.current.of(settingsExtensions()),
         langComp.current.of([]),

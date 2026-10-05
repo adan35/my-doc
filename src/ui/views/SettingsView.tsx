@@ -197,6 +197,13 @@ export function SettingsView() {
             ]}
           />
         </Row>
+        <Row label="Formatting toolbar" htmlFor="toolbar">
+          <Toggle
+            id="toolbar"
+            checked={s.formatToolbar}
+            onChange={(formatToolbar) => set({ formatToolbar })}
+          />
+        </Row>
         <Row label="Word wrap" htmlFor="wrap">
           <Toggle id="wrap" checked={s.wordWrap} onChange={(wordWrap) => set({ wordWrap })} />
         </Row>

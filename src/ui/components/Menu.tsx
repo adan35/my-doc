@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { ChevronRight } from 'lucide-react';
 import { create } from 'zustand';
 import { formatShortcut, useLayout } from '../hooks';
+import { restoreFocus } from '../focus';
 
 export interface MenuItem {
   label: string;
@@ -33,8 +34,11 @@ export function openMenu(req: MenuRequest) {
 export function closeMenu() {
   const m = useMenuStore.getState().menu;
   useMenuStore.setState({ menu: null });
-  m?.returnFocus?.focus?.();
+  if (m?.returnFocus) restoreFocus(m.returnFocus);
 }
+
+/** True while a menu (a popover, or a bottom sheet on phones) is open. */
+export const useMenuOpen = () => useMenuStore((s) => !!s.menu);
 
 /** Opens a menu below an element (for "…" buttons). */
 export function openMenuAt(el: HTMLElement, items: MenuEntry[], label?: string) {
@@ -51,7 +55,11 @@ export function MenuHost() {
   );
 }
 
-function useMenuKeyboard(listRef: React.RefObject<HTMLDivElement | null>, onEscape: () => void) {
+function useMenuKeyboard(
+  listRef: React.RefObject<HTMLDivElement | null>,
+  onEscape: () => void,
+  items: MenuEntry[],
+) {
   useEffect(() => {
     const list = listRef.current;
     if (!list) return;
@@ -89,7 +97,8 @@ function useMenuKeyboard(listRef: React.RefObject<HTMLDivElement | null>, onEsca
     };
     list.addEventListener('keydown', onKey);
     return () => list.removeEventListener('keydown', onKey);
-  }, [listRef, onEscape]);
+    // Re-runs when a submenu replaces the items, so focus moves to its first item.
+  }, [listRef, onEscape, items]);
 }
 
 function MenuItems({
@@ -140,7 +149,7 @@ function MenuPopover({ menu }: { menu: MenuRequest }) {
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const [items, setItems] = useState(menu.items);
   useEffect(() => setItems(menu.items), [menu]);
-  useMenuKeyboard(ref, closeMenu);
+  useMenuKeyboard(ref, closeMenu, items);
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -196,7 +205,7 @@ function MenuPopover({ menu }: { menu: MenuRequest }) {
 function MenuSheet({ menu }: { menu: MenuRequest }) {
   const ref = useRef<HTMLDivElement>(null);
   const [items, setItems] = useState(menu.items);
-  useMenuKeyboard(ref, closeMenu);
+  useMenuKeyboard(ref, closeMenu, items);
   return (
     <div className="fixed inset-0 z-[60] flex flex-col justify-end" onClick={closeMenu}>
       <div className="absolute inset-0 bg-[var(--scrim)]" aria-hidden />

@@ -92,12 +92,20 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
     if (!el) return;
     let cancelled = false;
     const dir = tree.dirOf(docId);
-    for (const img of el.querySelectorAll<HTMLImageElement>('img[src]')) {
-      const src = img.getAttribute('src') ?? '';
+    for (const img of el.querySelectorAll<HTMLImageElement>('img[src], img[data-src]')) {
+      // The written path is kept in data-src: this effect can run again (Strict Mode, a
+      // tree change) after src was cleared or swapped for an object URL.
+      const src = img.dataset.src ?? img.getAttribute('src') ?? '';
       if (isExternalHref(src) || src.startsWith('data:') || src.startsWith('blob:')) continue;
-      const path = resolvePath(dir, safeDecode(src.split('#')[0]!.split('?')[0]!));
-      const target = path !== null ? tree.findByPath(path) : undefined;
-      img.removeAttribute('src');
+      img.dataset.src = src;
+      const wiki = img.dataset.wiki;
+      const path = wiki ? null : resolvePath(dir, safeDecode(src.split('#')[0]!.split('?')[0]!));
+      const target = wiki
+        ? resolveWikiLink(tree, wiki)
+        : path !== null
+          ? tree.findByPath(path)
+          : undefined;
+      if (!img.src.startsWith('blob:')) img.removeAttribute('src');
       if (!target) {
         markMissing(img, src);
         continue;
@@ -157,7 +165,16 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
   }, [rendered]);
 
   const onClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
+    let target = e.target as HTMLElement;
+    // On touch screens a tap anywhere on a task's own text toggles it.
+    if (
+      target.classList.contains('task-list-item') &&
+      matchMedia('(pointer: coarse)').matches &&
+      !getSelection()?.toString()
+    ) {
+      const box = target.querySelector<HTMLInputElement>(':scope > .task-list-item-checkbox');
+      if (box) target = box;
+    }
     if (
       target instanceof HTMLInputElement &&
       target.classList.contains('task-list-item-checkbox')

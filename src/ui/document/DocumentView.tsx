@@ -25,6 +25,7 @@ import type { Entry, EntryId } from '@/domain/types';
 import { fileTypeOf, isMarkdownName, isTextType } from '@/domain/names';
 import { extractHeadings } from '@/domain/outline';
 import { toggleTaskAt } from '@/domain/tasks';
+import { findFirstMatch } from '@/app/search';
 import { ws } from '@/app/app-store';
 import { editorActions, useEditor } from '@/app/editor-store';
 import { useSettings, type ViewMode } from '@/app/settings-store';
@@ -34,6 +35,8 @@ import { SHORTCUTS } from '@/app/shortcuts';
 import { dialogs } from '@/app/dialog-store';
 import * as A from '@/app/actions';
 import { Editor, type EditorHandle } from '../editor/Editor';
+import { FormatToolbar } from '../editor/FormatToolbar';
+import { insertTable } from '../editor/commands';
 import { openMenuAt, type MenuEntry } from '../components/Menu';
 import { formatShortcut, useLayout, useTree } from '../hooks';
 import { exportSubmenu } from '../entry-menu';
@@ -115,6 +118,7 @@ function TextDocument({ entry, anchor }: { entry: Entry; anchor?: string }) {
   const fontSize = useSettings((s) => s.fontSize);
   const editorFont = useSettings((s) => s.editorFont);
   const readingWidth = useSettings((s) => s.readingWidth);
+  const showToolbar = useSettings((s) => s.formatToolbar);
   const storedMode = useUi((s) => s.viewModes[id]);
   const focusMode = useUi((s) => s.focusMode);
   const readingMode = useUi((s) => s.readingMode);
@@ -125,6 +129,7 @@ function TextDocument({ entry, anchor }: { entry: Entry; anchor?: string }) {
   const [activeLine, setActiveLine] = useState(0);
   const [progress, setProgress] = useState(0);
   const [outlineSheet, setOutlineSheet] = useState(false);
+  const focusRequest = useEditor((s) => s.focusRequest);
 
   let mode: ViewMode = isMd ? (storedMode ?? defaultMode) : 'edit';
   if (mode === 'split' && !desktop) mode = 'edit';
@@ -155,6 +160,29 @@ function TextDocument({ entry, anchor }: { entry: Entry; anchor?: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anchor, id, buffer?.status]);
 
+  // Move focus into the document when asked (new documents, quick open, search results).
+  // Deferred a frame so it lands on the editor that ends up mounted.
+  useEffect(() => {
+    if (focusRequest?.id !== id || !buffer || buffer.status === 'loading') return;
+    // Focus right away so early keystrokes land in the editor, then finish a frame later.
+    if (mode !== 'preview') editorRef.current?.focus();
+    const raf = requestAnimationFrame(() => {
+      const req = editorActions.takeFocusRequest(id);
+      if (!req) return;
+      if (mode !== 'preview') {
+        editorRef.current?.focus({ find: req.find, end: req.end });
+        return;
+      }
+      const match = req.find ? findFirstMatch(buffer.text, req.find) : null;
+      if (match) {
+        const line = buffer.text.slice(0, match.from).split('\n').length - 1;
+        previewRef.current?.scrollToLine(line, true);
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusRequest, id, buffer?.status, mode]);
+
   // Listen for "find" and "toggle mode" commands sent from the shell/palette.
   useEffect(() => {
     const onCmd = (e: Event) => {
@@ -165,6 +193,13 @@ function TextDocument({ entry, anchor }: { entry: Entry; anchor?: string }) {
       } else if (cmd === 'toggle-mode' && isMd) setMode(mode === 'edit' ? 'preview' : 'edit');
       else if (cmd === 'split' && isMd && desktop) setMode(mode === 'split' ? 'edit' : 'split');
       else if (cmd === 'focus-editor') editorRef.current?.focus();
+      else if (cmd === 'insert-table' && isMd) {
+        if (mode === 'preview') setMode('edit');
+        setTimeout(() => {
+          const view = editorRef.current?.view;
+          if (view) insertTable(view);
+        }, 0);
+      }
     };
     addEventListener('mydoc:doc-command', onCmd);
     return () => removeEventListener('mydoc:doc-command', onCmd);
@@ -197,6 +232,7 @@ function TextDocument({ entry, anchor }: { entry: Entry; anchor?: string }) {
   const editorStyle = {
     '--editor-size': `${fontSize - (editorFont === 'mono' ? 1 : 0)}px`,
     '--editor-font': editorFont === 'mono' ? 'var(--font-mono)' : 'var(--font-sans)',
+    '--editor-line-height': editorFont === 'mono' ? 1.65 : 1.75,
     '--editor-max': mode === 'split' ? '100%' : `${widthPx + 60}px`,
   } as React.CSSProperties;
 
@@ -253,21 +289,26 @@ function TextDocument({ entry, anchor }: { entry: Entry; anchor?: string }) {
         <div className="flex min-h-0 flex-1" style={editorStyle}>
           {mode !== 'preview' && (
             <div
-              className={`h-full min-w-0 flex-1 ${mode === 'split' ? 'border-r border-hairline' : ''}`}
+              className={`flex h-full min-w-0 flex-1 flex-col ${mode === 'split' ? 'border-r border-hairline' : ''}`}
             >
-              <Editor
-                ref={editorRef}
-                docId={id}
-                name={entry.name}
-                text={text}
-                rev={buffer.rev}
-                onChange={(t) => editorActions.setText(id, t)}
-                onSave={() => void editorActions.flush(id)}
-                onScrollLine={(line) => {
-                  if (mode === 'edit') setActiveLine(line);
-                  if (mode === 'split') previewRef.current?.scrollToLine(line);
-                }}
-              />
+              {isMd && showToolbar && !focusMode && (
+                <FormatToolbar getView={() => editorRef.current?.view ?? null} />
+              )}
+              <div className="min-h-0 flex-1">
+                <Editor
+                  ref={editorRef}
+                  docId={id}
+                  name={entry.name}
+                  text={text}
+                  rev={buffer.rev}
+                  onChange={(t) => editorActions.setText(id, t)}
+                  onSave={() => void editorActions.flush(id)}
+                  onScrollLine={(line) => {
+                    if (mode === 'edit') setActiveLine(line);
+                    if (mode === 'split') previewRef.current?.scrollToLine(line);
+                  }}
+                />
+              </div>
             </div>
           )}
           {mode !== 'edit' && preview}
@@ -520,6 +561,7 @@ function DocHeader({
         type="button"
         className="icon-btn"
         aria-label="More actions"
+        aria-haspopup="menu"
         title="More actions"
         onClick={(e) => openMenuAt(e.currentTarget, menu, entry.name)}
       >

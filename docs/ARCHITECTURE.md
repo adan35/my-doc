@@ -85,7 +85,7 @@ A future store (real folders on disk, or a server) only has to implement these t
 
 - `layout/`: `AppShell` (responsive frame, drawer, file drop target), `Sidebar`, `FileTree` (virtualized ARIA tree), `TabBar`, `Palette` (command palette and quick open), `MobileNav`, global shortcuts.
 - `document/`: `DocumentView` (edit, split and preview modes), `Preview`, `RightPanel` (outline, links, info), `SaveStatus`, `BinaryView`.
-- `editor/`: the CodeMirror setup. One `EditorState` is cached per open document, so switching tabs keeps undo history, selection and scroll.
+- `editor/`: the CodeMirror setup and the formatting toolbar. One `EditorState` is cached per open document, so switching tabs keeps undo history, selection and scroll.
 - `views/`: Home, Folder, Search, Favorites, Recent, Tags, Trash, Settings.
 - `components/` and `dialogs/`: menus (popover on desktop, bottom sheet on phones), dialogs, toasts, empty states, version history, shortcuts help.
 

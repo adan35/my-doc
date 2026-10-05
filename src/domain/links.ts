@@ -9,6 +9,8 @@ export interface RawLink {
   target: string;
   /** Optional `#fragment`. */
   fragment?: string;
+  /** `![[...]]`: an embedded image or note, written as a wiki link. */
+  embed?: boolean;
   /** Offsets of the target text within the source (for rewriting). */
   start: number;
   end: number;
@@ -46,9 +48,10 @@ export function extractLinks(src: string): RawLink[] {
       const name = m[2]!.trim();
       const start = line.offset + m.index! + m[1]!.length + 2;
       links.push({
-        kind: m[1] ? 'image' : 'wiki',
+        kind: 'wiki',
         target: name,
         fragment: m[3]?.slice(1),
+        embed: !!m[1] || undefined,
         start,
         end: start + m[2]!.length,
       });

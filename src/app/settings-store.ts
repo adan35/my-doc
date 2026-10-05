@@ -23,6 +23,8 @@ export interface Settings {
   explorerSortDir: SortDir;
   explorerView: ExplorerView;
   spellcheck: boolean;
+  /** Formatting buttons above the Markdown editor. */
+  formatToolbar: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -40,6 +42,7 @@ export const DEFAULT_SETTINGS: Settings = {
   explorerSortDir: 'asc',
   explorerView: 'list',
   spellcheck: true,
+  formatToolbar: true,
 };
 
 const KEY = 'mydoc:settings';

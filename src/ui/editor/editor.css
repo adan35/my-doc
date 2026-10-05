@@ -9,8 +9,7 @@
   outline: none;
 }
 .cm-scroller {
-  font-family: var(--editor-font, var(--font-mono));
-  line-height: 1.7;
+  /* Font family and line height are set in the editor theme (Editor.tsx). */
   overscroll-behavior: contain;
 }
 .cm-editor .cm-content {

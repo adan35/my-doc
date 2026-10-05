@@ -59,14 +59,7 @@ export function useGlobalShortcuts() {
         if (m(SHORTCUTS.readingMode)) return run(() => ui.setReadingMode(!ui.readingMode));
         if (m(SHORTCUTS.closeTab)) {
           const id = useEditor.getState().activeId;
-          if (id)
-            return run(
-              () =>
-                void editorActions.close(id).then(() => {
-                  const next = useEditor.getState().activeId;
-                  navigate(next ? { name: 'doc', id: next } : { name: 'home' }, { replace: true });
-                }),
-            );
+          if (id) return run(() => void A.closeTab(id));
         }
         if (m(SHORTCUTS.nextTab) || m('Ctrl+Shift+Tab')) {
           const { tabs, activeId } = useEditor.getState();

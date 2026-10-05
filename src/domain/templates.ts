@@ -46,12 +46,12 @@ A short description of what this project does and who it is for.
     fileName: 'Meeting {{date}}',
     body: `# {{title}}
 
-**Date:** {{date}}
-**Attendees:**
+- **Date:** {{date}}
+- **Attendees:** 
 
 ## Agenda
 
-1.
+1. 
 
 ## Notes
 
@@ -59,7 +59,7 @@ A short description of what this project does and who it is for.
 
 ## Action items
 
-- [ ]
+- [ ] 
 `,
   },
   {
@@ -133,13 +133,40 @@ Created: {{date}}
 
 ## Sources
 
--
+- 
 
 ## Findings
 
 ## Conclusions
 
 ## References
+`,
+  },
+  {
+    id: 'lecture',
+    name: 'Lecture notes',
+    description: 'Course, key ideas, formulas and questions to review.',
+    fileName: 'Lecture {{date}}',
+    body: `# {{title}}
+
+- **Course:** 
+- **Date:** {{date}}
+
+## Key ideas
+
+- 
+
+## Formulas
+
+$$
+E = mc^2
+$$
+
+## Questions to review
+
+- [ ] 
+
+#lecture
 `,
   },
   {
@@ -153,7 +180,7 @@ Created: {{date}}
 
 ## Tasks
 
-- [ ]
+- [ ] 
 
 ## Notes
 `,
