@@ -32,6 +32,7 @@ import {
   Table,
   Pin,
   X,
+  AlignVerticalJustifyCenter,
 } from 'lucide-react';
 import * as A from '@/app/actions';
 import { ws } from '@/app/app-store';
@@ -355,6 +356,14 @@ export function getCommands(): Command[] {
         run: () => void A.trashEntries([doc.id]),
       },
       {
+        id: 'typewriter',
+        title: settings.typewriter ? 'Turn off typewriter scrolling' : 'Typewriter scrolling',
+        group: 'View',
+        icon: <AlignVerticalJustifyCenter />,
+        keywords: 'center line writing focus',
+        run: () => settings.update({ typewriter: !settings.typewriter }),
+      },
+      {
         id: 'focus',
         title: ui.focusMode ? 'Exit focus mode' : 'Focus mode',
         group: 'View',
@@ -410,6 +419,14 @@ export function getCommands(): Command[] {
           run: () => void dialogs.history(doc.id),
         },
         {
+          id: 'save-template',
+          title: 'Save as template',
+          group: 'Document',
+          icon: <LayoutTemplate />,
+          keywords: 'reuse copy',
+          run: () => void A.saveAsTemplate(doc.id),
+        },
+        {
           id: 'tag',
           title: 'Add tag…',
           group: 'Document',
@@ -422,6 +439,14 @@ export function getCommands(): Command[] {
           group: 'Document',
           icon: <Download />,
           run: () => void A.exportEntry(doc.id, 'html'),
+        },
+        {
+          id: 'export-txt',
+          title: 'Export as plain text',
+          group: 'Document',
+          icon: <Download />,
+          keywords: 'txt',
+          run: () => void A.exportEntry(doc.id, 'txt'),
         },
         {
           id: 'export-pdf',

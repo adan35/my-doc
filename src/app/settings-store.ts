@@ -25,6 +25,8 @@ export interface Settings {
   spellcheck: boolean;
   /** Formatting buttons above the Markdown editor. */
   formatToolbar: boolean;
+  /** Keep the line being edited near the middle of the screen. */
+  typewriter: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -43,6 +45,7 @@ export const DEFAULT_SETTINGS: Settings = {
   explorerView: 'list',
   spellcheck: true,
   formatToolbar: true,
+  typewriter: false,
 };
 
 const KEY = 'mydoc:settings';

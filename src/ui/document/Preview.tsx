@@ -230,6 +230,7 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
 
   return (
     <>
+      {rendered.frontMatter && <Properties data={rendered.frontMatter} className={className} />}
       <article
         ref={root}
         className={`prose ${className}`}
@@ -258,6 +259,34 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
           document.body,
         )}
     </>
+  );
+}
+
+/** Formats a front-matter value for display without changing the source. */
+export function propertyText(v: unknown): string {
+  if (v === null || v === undefined) return '';
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  if (Array.isArray(v)) return v.map(propertyText).join(', ');
+  if (typeof v === 'object') return JSON.stringify(v);
+  return String(v);
+}
+
+/** Front matter shown as a quiet properties table above the document. */
+function Properties({ data, className }: { data: Record<string, unknown>; className: string }) {
+  const entries = Object.entries(data).filter(([, v]) => propertyText(v) !== '');
+  if (!entries.length) return null;
+  return (
+    <dl
+      aria-label="Properties"
+      className={`properties mb-6 grid grid-cols-[minmax(80px,auto)_1fr] gap-x-6 gap-y-1 border-b border-hairline pb-4 text-[13px] ${className}`}
+    >
+      {entries.map(([k, v]) => (
+        <div key={k} className="contents">
+          <dt className="truncate text-steel">{k}</dt>
+          <dd className="min-w-0 break-words text-charcoal">{propertyText(v)}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 

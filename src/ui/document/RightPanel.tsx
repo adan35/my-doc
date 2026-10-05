@@ -1,5 +1,15 @@
-import { useMemo } from 'react';
-import { History, Link2, ListTree, Info, Plus, X, ArrowUpRight, AlertTriangle } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import {
+  ChevronRight,
+  History,
+  Link2,
+  ListTree,
+  Info,
+  Plus,
+  X,
+  ArrowUpRight,
+  AlertTriangle,
+} from 'lucide-react';
 import type { EntryId } from '@/domain/types';
 import { extractHeadings } from '@/domain/outline';
 import { countWords } from '@/domain/tasks';
@@ -74,6 +84,7 @@ export function Outline({
   onJump(line: number): void;
 }) {
   const headings = useMemo(() => extractHeadings(text), [text]);
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
   if (!headings.length) {
     return (
       <p className="px-1 text-caption text-steel">
@@ -84,16 +95,52 @@ export function Outline({
   const minLevel = Math.min(...headings.map((h) => h.level));
   let current = -1;
   for (let i = 0; i < headings.length; i++) if (headings[i]!.line <= activeLine) current = i;
+  // A heading has children when the next heading is deeper; collapsed ones hide them.
+  const visible: { h: (typeof headings)[number]; i: number; parent: boolean }[] = [];
+  let hideBelow = Infinity;
+  for (let i = 0; i < headings.length; i++) {
+    const h = headings[i]!;
+    if (h.level <= hideBelow) hideBelow = Infinity;
+    if (hideBelow !== Infinity) continue;
+    const parent = (headings[i + 1]?.level ?? 0) > h.level;
+    visible.push({ h, i, parent });
+    if (parent && collapsed.has(h.slug)) hideBelow = h.level;
+  }
+  const toggle = (slug: string) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(slug)) next.add(slug);
+      return next;
+    });
   return (
     <nav aria-label="Outline">
       <ul className="space-y-px">
-        {headings.map((h, i) => (
-          <li key={`${h.line}-${h.slug}`}>
+        {visible.map(({ h, i, parent }) => (
+          <li
+            key={`${h.line}-${h.slug}`}
+            className="flex items-center"
+            style={{ paddingLeft: (h.level - minLevel) * 12 }}
+          >
+            {parent ? (
+              <button
+                type="button"
+                className="flex size-5 shrink-0 items-center justify-center rounded text-stone hover:bg-hover hover:text-ink"
+                aria-label={`${collapsed.has(h.slug) ? 'Expand' : 'Collapse'} ${h.text}`}
+                aria-expanded={!collapsed.has(h.slug)}
+                onClick={() => toggle(h.slug)}
+              >
+                <ChevronRight
+                  size={12}
+                  className={`transition-transform motion-reduce:transition-none ${collapsed.has(h.slug) ? '' : 'rotate-90'}`}
+                />
+              </button>
+            ) : (
+              <span className="w-5 shrink-0" />
+            )}
             <button
               type="button"
               aria-current={i === current ? 'location' : undefined}
-              className={`block w-full truncate rounded-md py-1 pr-2 text-left text-[13px] leading-snug hover:bg-hover ${i === current ? 'font-medium text-ink' : 'text-slate'}`}
-              style={{ paddingLeft: 8 + (h.level - minLevel) * 12 }}
+              className={`block min-w-0 flex-1 truncate rounded-md py-1 pr-2 pl-1 text-left text-[13px] leading-snug hover:bg-hover ${i === current ? 'font-medium text-ink' : 'text-slate'}`}
               onClick={() => onJump(h.line)}
               title={h.text}
             >
@@ -198,6 +245,7 @@ function DocInfo({ docId, text }: { docId: EntryId; text: string }) {
     ['Size', formatBytes(e.size)],
     ['Words', words.toLocaleString()],
     ['Characters', text.length.toLocaleString()],
+    ['Lines', (text ? text.split('\n').length : 0).toLocaleString()],
     ['Reading time', `${Math.max(1, Math.round(words / 230))} min`],
     [
       'Modified',

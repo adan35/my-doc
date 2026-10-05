@@ -221,6 +221,17 @@ export function SettingsView() {
             onChange={(spellcheck) => set({ spellcheck })}
           />
         </Row>
+        <Row
+          label="Typewriter scrolling"
+          hint="Keeps the line you're writing near the middle of the screen."
+          htmlFor="typewriter"
+        >
+          <Toggle
+            id="typewriter"
+            checked={s.typewriter}
+            onChange={(typewriter) => set({ typewriter })}
+          />
+        </Row>
         <Row label="Tab size">
           <Segmented
             label="Tab size"

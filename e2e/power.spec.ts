@@ -115,3 +115,51 @@ test('search understands phrases, tags, folders and exclusions', async ({ page }
   await box.fill('zzzz nothing');
   await expect(page.getByRole('button', { name: 'Open by name instead' })).toBeVisible();
 });
+
+test('your own templates, front matter properties and outline folding', async ({ page }) => {
+  await freshApp(page);
+  await newDocInRoot(page, 'Weekly report.md');
+  await page.locator('.cm-content').click();
+  await page.keyboard.press(`${mod}+a`);
+  await page.keyboard.type(
+    '---\nstatus: draft\ntags: [report]\n---\n# {{title}}\n\nWeek of {{date}}.\n\n## Wins\n\n### Details\n\n## Risks\n',
+  );
+  await waitSaved(page);
+
+  // Properties render above the document; the YAML stays untouched.
+  await page.getByRole('button', { name: 'Preview' }).click();
+  const props = page.getByRole('definition').filter({ hasText: 'draft' });
+  await expect(props).toBeVisible();
+
+  // The outline folds sections.
+  await page.getByRole('tab', { name: 'Outline' }).click();
+  const outline = page.getByRole('navigation', { name: 'Outline' });
+  await expect(outline.getByRole('button', { name: 'Details' })).toBeVisible();
+  await outline.getByRole('button', { name: 'Collapse Wins' }).click();
+  await expect(outline.getByRole('button', { name: 'Details' })).toBeHidden();
+  await expect(outline.getByRole('button', { name: 'Risks' })).toBeVisible();
+
+  // Save as template, then create a document from it.
+  await page.keyboard.press(`${mod}+k`);
+  await page.keyboard.type('save as template');
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('treeitem', { name: 'Templates' })).toBeVisible();
+  await page.getByRole('button', { name: 'Templates', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'New from template' });
+  await dialog.getByRole('button', { name: /Weekly report/ }).click();
+  await expect(page.locator('.cm-content')).toContainText('# Weekly report (2)');
+  await expect(page.locator('.cm-content')).toContainText(/Week of \d{4}-\d{2}-\d{2}\./);
+});
+
+test('documents export as plain text', async ({ page }) => {
+  await freshApp(page);
+  await page.keyboard.press(`${mod}+k`);
+  await page.keyboard.type('export as plain text');
+  const download = page.waitForEvent('download');
+  await page.keyboard.press('Enter');
+  const file = await download;
+  expect(file.suggestedFilename()).toBe('Welcome to My Doc.txt');
+  const text = await (await import('node:fs/promises')).readFile((await file.path())!, 'utf8');
+  expect(text).toContain('Welcome to My Doc');
+  expect(text).not.toContain('**');
+});
