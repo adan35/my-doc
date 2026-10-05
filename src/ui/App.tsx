@@ -7,6 +7,7 @@ import { DialogHost } from './dialogs/DialogHost';
 import { MenuHost } from './components/Menu';
 import { Toaster } from './components/Toaster';
 import { useResolvedTheme } from './hooks';
+import { installNativeLinkHandler, onBeforeQuit } from '@/platform';
 
 function useThemeAttribute() {
   const theme = useResolvedTheme();
@@ -55,12 +56,20 @@ function useLifecycle() {
     document.addEventListener('visibilitychange', onHide);
     addEventListener('pagehide', protect);
     addEventListener('beforeunload', onBeforeUnload);
+    // Desktop windows can close without a reliable pagehide, so save explicitly first.
+    const offQuit = onBeforeQuit(() => {
+      writeRecoveryDrafts();
+      return editorActions.flushAll();
+    });
     return () => {
+      offQuit();
       document.removeEventListener('visibilitychange', onHide);
       removeEventListener('pagehide', protect);
       removeEventListener('beforeunload', onBeforeUnload);
     };
   }, []);
+
+  useEffect(() => installNativeLinkHandler(), []);
 
   // Printing / "Export as PDF" prints only the rendered document.
   useEffect(() => {
