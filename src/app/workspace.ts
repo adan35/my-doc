@@ -14,6 +14,7 @@ import {
 import { extractLinks, rewriteLinks, type RawLink } from '@/domain/links';
 import { encodeHrefPath, relativePath, resolvePath } from '@/domain/paths';
 import { addTag, removeTag, replaceTag } from '@/domain/tags';
+import { linkFirstMention } from '@/domain/mentions';
 import type { ChangeSet, WorkspaceStore } from '@/storage/types';
 
 /** Snapshot the previous content when the last snapshot is older than this. */
@@ -663,6 +664,11 @@ export class Workspace {
 
   renameTag(docIds: EntryId[], from: string, to: string) {
     return this.serial(() => this.editTexts(docIds, (t) => replaceTag(t, from, to)));
+  }
+
+  /** Turns the first plain-text mention of `name` in a document into a wiki link. */
+  linkMention(id: EntryId, name: string) {
+    return this.serial(() => this.editTexts([id], (t) => linkFirstMention(t, name) ?? t));
   }
 }
 

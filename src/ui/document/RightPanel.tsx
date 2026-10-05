@@ -16,7 +16,8 @@ import { countWords } from '@/domain/tasks';
 import { formatBytes, fileTypeOf } from '@/domain/names';
 import { session } from '@/app/app-store';
 import { useUi, type RightPanel as Panel } from '@/app/ui-store';
-import { addTagTo, openEntry, removeTagFrom } from '@/app/actions';
+import { addTagTo, linkMention, openEntry, removeTagFrom } from '@/app/actions';
+import { editorActions } from '@/app/editor-store';
 import { dialogs } from '@/app/dialog-store';
 import { navigate } from '@/app/router';
 import { FileIcon } from '../components/FileIcon';
@@ -163,6 +164,11 @@ function Links({ docId }: { docId: EntryId }) {
     ...new Map(outgoing.filter((o) => o.targetId).map((o) => [o.targetId!, o])).values(),
   ];
   const broken = outgoing.filter((o) => !o.targetId);
+  const linkedIds = new Set([...backlinks, ...uniqueOut.map((o) => o.targetId!)]);
+  const related = s.knowledge
+    .related(tree, docId, 12)
+    .filter((r) => !linkedIds.has(r))
+    .slice(0, 6);
   return (
     <div className="space-y-5">
       <section>
@@ -183,6 +189,13 @@ function Links({ docId }: { docId: EntryId }) {
           <p className="px-1 text-caption text-steel">None.</p>
         )}
       </section>
+      <UnlinkedMentions docId={docId} />
+      {related.length > 0 && (
+        <section>
+          <h3 className="section-label mb-1.5 px-1">Related · {related.length}</h3>
+          <EntryList ids={related} />
+        </section>
+      )}
       {broken.length > 0 && (
         <section>
           <h3 className="section-label mb-1.5 flex items-center gap-1 px-1 text-warning">
@@ -198,6 +211,74 @@ function Links({ docId }: { docId: EntryId }) {
         </section>
       )}
     </div>
+  );
+}
+
+/** Documents that name this one in plain text, with a one-click "Link" to connect them. */
+function UnlinkedMentions({ docId }: { docId: EntryId }) {
+  const tree = useTree()!;
+  useIndexVersion();
+  const [open, setOpen] = useState(false);
+  const mentions = open
+    ? session().knowledge.unlinkedMentions(tree, docId, session().workspace.allTexts())
+    : [];
+  return (
+    <section>
+      <button
+        type="button"
+        aria-expanded={open}
+        className="section-label mb-1.5 flex items-center gap-1 px-1 hover:text-ink"
+        onClick={() => setOpen(!open)}
+      >
+        <ChevronRight
+          size={12}
+          aria-hidden
+          className={`transition-transform motion-reduce:transition-none ${open ? 'rotate-90' : ''}`}
+        />
+        Unlinked mentions{open ? ` · ${mentions.length}` : ''}
+      </button>
+      {open &&
+        (mentions.length ? (
+          <ul className="space-y-px">
+            {mentions.map(({ id, count }) => {
+              const e = tree.get(id);
+              if (!e) return null;
+              return (
+                <li key={id} className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-hover"
+                    onClick={() => {
+                      const target = tree.get(docId);
+                      if (target)
+                        editorActions.requestFocus(id, {
+                          find: [target.name.replace(/\.[^.]+$/, '')],
+                        });
+                      void openEntry(id);
+                    }}
+                  >
+                    <FileIcon entry={e} className="shrink-0 text-steel" />
+                    <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{e.name}</span>
+                    <span className="text-xs text-stone">{count}×</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="h-6 shrink-0 rounded px-1.5 text-xs text-steel hover:bg-hover hover:text-ink"
+                    aria-label={`Link the mention in ${e.name}`}
+                    onClick={() => void linkMention(id, docId)}
+                  >
+                    Link
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="px-1 text-caption text-steel">
+            No other document mentions this one by name without linking to it.
+          </p>
+        ))}
+    </section>
   );
 }
 

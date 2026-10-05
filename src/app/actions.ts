@@ -121,6 +121,45 @@ export async function newFromTemplate(parentId: EntryId | null = contextFolderId
   if (id) return newDocument(parentId, id);
 }
 
+/**
+ * Opens today's note (YYYY-MM-DD.md in the daily notes folder), creating it from
+ * the daily template if needed.
+ */
+export async function openDailyNote() {
+  const date = isoDate();
+  return guard("Unable to open today's note.", async () => {
+    let parentId: EntryId | null = null;
+    const segments = useSettings
+      .getState()
+      .dailyFolder.split('/')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (const seg of segments) parentId = (await ws().ensureFolder(parentId, seg)).id;
+    const tree = ws().tree;
+    const existing = tree
+      .childrenOf(parentId)
+      .find((e) => e.kind === 'file' && e.name.toLowerCase() === `${date}.md`);
+    if (existing) {
+      editorActions.requestFocus(existing.id, { end: true });
+      await openEntry(existing.id);
+      return existing;
+    }
+    const template = TEMPLATES.find((t) => t.id === 'daily')!;
+    const entry = await ws().createFile(
+      parentId,
+      `${date}.md`,
+      expandTemplate(template.body, { title: date, date }),
+      { uniquify: false },
+    );
+    if (parentId) appActions.setExpanded(parentId, true);
+    if (useSettings.getState().defaultViewMode === 'preview')
+      useUi.getState().setViewMode(entry.id, 'edit');
+    editorActions.requestFocus(entry.id, { end: true });
+    await openEntry(entry.id);
+    return entry;
+  });
+}
+
 /** Copies a document into the Templates folder so it shows up in "New from template". */
 export async function saveAsTemplate(id: EntryId) {
   const e = ws().get(id);
@@ -393,6 +432,14 @@ export async function exportEntry(
       setTimeout(() => window.print(), 400);
     }
   });
+}
+
+/** Links a plain-text mention of `targetId` in `sourceId` (from "Unlinked mentions"). */
+export async function linkMention(sourceId: EntryId, targetId: EntryId) {
+  const target = ws().get(targetId);
+  if (!target) return;
+  await editorActions.flush(sourceId);
+  await guard('Unable to add the link.', () => ws().linkMention(sourceId, baseName(target.name)));
 }
 
 export async function addTagTo(id: EntryId) {

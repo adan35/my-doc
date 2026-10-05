@@ -18,6 +18,7 @@ import { slugify } from '@/domain/outline';
 import { resolveWikiLink } from '@/app/workspace';
 import { toast } from '@/app/toast-store';
 import { useResolvedTheme, useTree } from '../hooks';
+import { useLinkPreview } from './LinkPreview';
 
 export interface PreviewHandle {
   scrollToLine(line: number, smooth?: boolean): void;
@@ -60,6 +61,13 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
   const theme = useResolvedTheme();
   const [zoom, setZoom] = useState<{ src: string; alt: string } | null>(null);
   const rendered = useMemo(() => renderMarkdown(deferred), [deferred]);
+  const linkPreview = useLinkPreview((a) => {
+    if (a.dataset.wiki !== undefined) return resolveWiki(a.dataset.wiki);
+    const href = a.getAttribute('href') ?? '';
+    if (!href || href.startsWith('#') || isExternalHref(href)) return undefined;
+    const id = resolveHref(docId, href);
+    return id && id !== docId ? id : undefined;
+  });
   const callbacks = useRef({ onToggleTask, onVisibleLine });
   callbacks.current = { onToggleTask, onVisibleLine };
 
@@ -234,10 +242,15 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
       <article
         ref={root}
         className={`prose ${className}`}
-        onClick={onClick}
+        onClick={(e) => {
+          linkPreview.hide();
+          onClick(e);
+        }}
+        {...linkPreview.handlers}
         // Sanitized by DOMPurify in renderMarkdown.
         dangerouslySetInnerHTML={{ __html: rendered.html }}
       />
+      {linkPreview.card}
       {zoom &&
         createPortal(
           <div
@@ -250,6 +263,41 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
             tabIndex={-1}
             ref={(el) => el?.focus()}
           >
+            <div
+              className="absolute top-3 right-3 flex gap-1 rounded-lg bg-canvas p-1 shadow-3"
+              role="toolbar"
+              aria-label="Image actions"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="btn btn-ghost h-8 px-2 text-caption"
+                onClick={() => window.open(zoom.src, '_blank', 'noopener')}
+              >
+                Open full size
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost h-8 px-2 text-caption"
+                onClick={() => void copyImage(zoom.src)}
+              >
+                Copy
+              </button>
+              <a
+                className="btn btn-ghost h-8 px-2 text-caption"
+                href={zoom.src}
+                download={zoom.alt || 'image'}
+              >
+                Download
+              </a>
+              <button
+                type="button"
+                className="btn btn-ghost h-8 px-2 text-caption"
+                onClick={() => setZoom(null)}
+              >
+                Close
+              </button>
+            </div>
             <img
               src={zoom.src}
               alt={zoom.alt}
@@ -260,6 +308,29 @@ export function Preview({ docId, text, className = '', onToggleTask, onVisibleLi
         )}
     </>
   );
+}
+
+/**
+ * Copies an image to the clipboard as PNG (the format every browser accepts).
+ * Drawn through a canvas rather than fetched, which the content security policy allows.
+ */
+async function copyImage(src: string) {
+  try {
+    const img = new Image();
+    img.src = src;
+    await img.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d')!.drawImage(img, 0, 0);
+    const png = await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('encode'))), 'image/png'),
+    );
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+    toast({ message: 'Image copied.', tone: 'success' });
+  } catch {
+    toast({ message: "This image can't be copied here. Try Download instead.", tone: 'error' });
+  }
 }
 
 /** Formats a front-matter value for display without changing the source. */

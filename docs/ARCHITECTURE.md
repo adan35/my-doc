@@ -29,6 +29,10 @@ Pure functions with unit tests in `domain.test.ts`.
 | `templates.ts`     | Document templates.                                                                                               |
 | `diff.ts`          | Line diff for version history.                                                                                    |
 | `tasks.ts`         | Task checkbox toggling and word counts.                                                                           |
+| `table.ts`         | GFM table parsing, editing operations and padded serializing for the table editor.                                |
+| `query.ts`         | Search query parsing: free text, `"phrases"`, `-exclusions`, `tag:`, `folder:`, `type:`, date ranges.             |
+| `mentions.ts`      | Plain-text mentions of a document name outside code and links, and linking the first one.                         |
+| `graph-layout.ts`  | A small force-directed layout (springs, grid-based repulsion) for the graph view.                                 |
 
 Every entry has a stable random id. Names and paths can change; ids never do. Tabs, favorites, recents, versions and links all refer to ids.
 
@@ -65,7 +69,8 @@ A future store (real folders on disk, or a server) only has to implement these t
 **`WorkspaceSession`** (`session.ts`) owns the derived indexes and keeps them current from workspace events:
 
 - `KnowledgeIndex` (`knowledge.ts`): tags and links per document, backlinks, broken links. Nothing here is stored; it is rebuilt from the files on open.
-- `SearchIndex` (`search.ts`): MiniSearch over name, path, tags and content with prefix and fuzzy matching, field boosts, filters and snippets.
+- `SearchIndex` (`search.ts`): MiniSearch over name, path, tags and content with prefix and fuzzy matching, field boosts, filters and snippets. Queries go through `parseQuery`; operators filter the ranked results (or, with no free text, list matching documents newest first).
+- `KnowledgeIndex` also answers related documents (links, shared tags and link targets, folder) and unlinked mentions, computed on demand when the Links panel is open. `graph.ts` builds the link graph for the lazily loaded graph view.
 
 **Stores** (Zustand):
 

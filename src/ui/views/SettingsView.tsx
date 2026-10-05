@@ -260,6 +260,22 @@ export function SettingsView() {
         </Row>
       </Section>
 
+      <Section title="Daily notes">
+        <Row
+          label="Daily notes folder"
+          hint="Today's note opens with Ctrl/Cmd + Shift + D. Use / for subfolders."
+          htmlFor="daily-folder"
+        >
+          <input
+            id="daily-folder"
+            className="input h-8 w-56"
+            value={s.dailyFolder}
+            onChange={(e) => set({ dailyFolder: e.target.value })}
+            onBlur={(e) => set({ dailyFolder: e.target.value.trim() || 'Daily notes' })}
+          />
+        </Row>
+      </Section>
+
       <Section title="Keyboard">
         <Row label="Keyboard shortcuts" hint="Custom shortcuts are planned for a later version.">
           <button

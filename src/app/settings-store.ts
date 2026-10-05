@@ -27,6 +27,8 @@ export interface Settings {
   formatToolbar: boolean;
   /** Keep the line being edited near the middle of the screen. */
   typewriter: boolean;
+  /** Folder path for daily notes ("Daily notes", "Journal/Daily"…). */
+  dailyFolder: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -46,6 +48,7 @@ export const DEFAULT_SETTINGS: Settings = {
   spellcheck: true,
   formatToolbar: true,
   typewriter: false,
+  dailyFolder: 'Daily notes',
 };
 
 const KEY = 'mydoc:settings';

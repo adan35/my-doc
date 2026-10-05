@@ -13,6 +13,7 @@ import {
   Star,
   Trash2,
   LayoutTemplate,
+  Network,
   Upload,
   Keyboard,
   PencilLine,
@@ -94,6 +95,12 @@ export function Sidebar({ onClose, drawer }: { onClose?: () => void; drawer?: bo
           label="Tags"
           route={{ name: 'tags' }}
           current={route.name === 'tags'}
+        />
+        <NavItem
+          icon={<Network size={16} />}
+          label="Graph"
+          route={{ name: 'graph' }}
+          current={route.name === 'graph'}
         />
         <button
           type="button"

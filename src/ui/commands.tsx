@@ -33,6 +33,8 @@ import {
   Pin,
   X,
   AlignVerticalJustifyCenter,
+  CalendarDays,
+  Network,
 } from 'lucide-react';
 import * as A from '@/app/actions';
 import { ws } from '@/app/app-store';
@@ -81,6 +83,15 @@ export function getCommands(): Command[] {
       icon: <LayoutTemplate />,
       keywords: 'readme meeting notes lecture class daily todo api research',
       run: () => void A.newFromTemplate(),
+    },
+    {
+      id: 'daily-note',
+      title: "Open today's daily note",
+      group: 'Create',
+      icon: <CalendarDays />,
+      shortcut: SHORTCUTS.dailyNote,
+      keywords: 'journal diary today date',
+      run: () => void A.openDailyNote(),
     },
     {
       id: 'new-folder',
@@ -168,6 +179,14 @@ export function getCommands(): Command[] {
       group: 'Navigate',
       icon: <Hash />,
       run: () => navigate({ name: 'tags' }),
+    },
+    {
+      id: 'graph',
+      title: 'Open graph view',
+      group: 'Navigate',
+      icon: <Network />,
+      keywords: 'links map connections knowledge',
+      run: () => navigate({ name: 'graph' }),
     },
     {
       id: 'trash',
@@ -289,6 +308,14 @@ export function getCommands(): Command[] {
         group: 'Document',
         icon: <Copy />,
         run: () => void A.duplicateEntry(doc.id),
+      },
+      {
+        id: 'local-graph',
+        title: 'Show local graph',
+        group: 'Document',
+        icon: <Network />,
+        keywords: 'links connections map',
+        run: () => navigate({ name: 'graph', id: doc.id }),
       },
       {
         id: 'pin-tab',

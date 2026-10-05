@@ -21,6 +21,7 @@ export const SHORTCUTS = {
   focusMode: 'Mod+Shift+.',
   readingMode: 'Mod+Shift+R',
   rename: 'F2',
+  dailyNote: 'Mod+Shift+D',
 } as const;
 
 export const SHORTCUT_GROUPS: { title: string; items: [string, string][] }[] = [
@@ -32,6 +33,7 @@ export const SHORTCUT_GROUPS: { title: string; items: [string, string][] }[] = [
       ['Search everything', SHORTCUTS.search],
       ['New document', SHORTCUTS.newDoc],
       ['New folder', SHORTCUTS.newFolder],
+      ["Today's daily note", SHORTCUTS.dailyNote],
       ['Toggle sidebar', SHORTCUTS.toggleSidebar],
       ['Toggle side panel', SHORTCUTS.togglePanel],
       ['Close overlays', 'Esc'],
