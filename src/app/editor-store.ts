@@ -5,6 +5,7 @@ import { useApp, ws } from './app-store';
 import { useSettings } from './settings-store';
 import { prefs } from './prefs';
 import { toastError, toast } from './toast-store';
+import { ownership } from './ownership';
 
 export type SaveStatus = 'loading' | 'saved' | 'unsaved' | 'saving' | 'error';
 
@@ -94,15 +95,27 @@ function scheduleSave(id: EntryId, delay = useSettings.getState().autosaveDelay)
 /** Writes all dirty buffers to localStorage synchronously, for crash/close recovery. */
 export function writeRecoveryDrafts() {
   const s = useApp.getState().session;
-  if (!s) return;
+  // A tab that handed the data to another tab must not overwrite that tab's drafts.
+  if (!s || !ownership.isOwner) return;
   const drafts: Record<EntryId, { text: string; at: number }> = {};
   for (const b of Object.values(get().buffers)) {
     if (b.status !== 'loading' && b.text !== b.savedText)
       drafts[b.id] = { text: b.text, at: Date.now() };
   }
-  if (Object.keys(drafts).length) prefs.set(recoveryKey(s.workspace.id), drafts);
-  else prefs.remove(recoveryKey(s.workspace.id));
+  if (!Object.keys(drafts).length) {
+    prefs.remove(recoveryKey(s.workspace.id));
+  } else if (!prefs.set(recoveryKey(s.workspace.id), drafts) && !warnedDraftFailure) {
+    warnedDraftFailure = true;
+    toast({
+      message: 'Unsaved changes could not be stored as a recovery copy.',
+      detail:
+        'Browser storage may be full. Keep this tab open until "Saved" appears, or export the document.',
+      tone: 'error',
+    });
+  }
 }
+
+let warnedDraftFailure = false;
 
 export const editorActions = {
   async open(id: EntryId, opts: { activate?: boolean } = {}) {
@@ -191,6 +204,14 @@ export const editorActions = {
 
   async flushAll() {
     await Promise.all(Object.keys(get().buffers).map((id) => editorActions.flush(id)));
+  },
+
+  /** Drops every tab and buffer without saving (after handing the data to another tab). */
+  reset() {
+    for (const t of timers.values()) clearTimeout(t);
+    timers.clear();
+    retries.clear();
+    set({ tabs: [], activeId: null, buffers: {}, closed: [], focusRequest: null });
   },
 
   hasUnsaved(): boolean {

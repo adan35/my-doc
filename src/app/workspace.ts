@@ -31,6 +31,13 @@ export type WorkspaceEvent =
 
 type Listener = (event: WorkspaceEvent) => void;
 
+let writeGuard: () => boolean = () => true;
+
+/** Lets the app block writes, for example while another browser tab owns the data. */
+export function setWriteGuard(fn: () => boolean) {
+  writeGuard = fn;
+}
+
 const textBytes = (s: string) => new Blob([s]).size;
 
 /**
@@ -91,6 +98,11 @@ export class Workspace {
   }
 
   private async apply(changes: ChangeSet, texts?: Map<EntryId, string>): Promise<void> {
+    if (!writeGuard()) {
+      throw new WorkspaceError(
+        'My Doc is open in another tab, so changes here are paused. Choose "Use here" to continue in this tab.',
+      );
+    }
     await this.store.commit(changes);
     for (const e of changes.putEntries ?? []) this.entries.set(e.id, e);
     for (const id of changes.deleteEntries ?? []) {

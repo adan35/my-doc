@@ -42,6 +42,7 @@ import { SHORTCUTS } from '@/app/shortcuts';
 import { isMarkdownName } from '@/domain/names';
 import { pickImport } from './import-pickers';
 import { reopenClosedTab, sendDocCommand } from './doc-commands';
+import { canInstall, installApp } from '@/pwa/register';
 
 export interface Command {
   id: string;
@@ -252,6 +253,16 @@ export function getCommands(): Command[] {
       run: () => void A.emptyTrash(),
     },
   ];
+  if (canInstall()) {
+    cmds.push({
+      id: 'install',
+      title: 'Install My Doc as an app',
+      group: 'Workspace',
+      icon: <Download />,
+      keywords: 'pwa desktop offline home screen',
+      run: () => void installApp(),
+    });
+  }
   if (doc) {
     const md = isMarkdownName(doc.name);
     cmds.unshift(

@@ -26,6 +26,7 @@ Your documents stay plain Markdown and text. Everything My Doc adds, like tags a
 
 - Autosave while you type (the delay is configurable), with retries if a write fails.
 - Unsaved edits are kept as a recovery draft when the tab closes or crashes, and restored on the next launch.
+- My Doc works in one browser tab at a time, so two tabs can never overwrite each other. A second tab offers **Use here**, which saves everything in the first tab and hands over.
 - Version history: a snapshot is taken after a 5-minute pause in editing (up to 50 per document), with a line diff and one-click restore.
 
 **Finding things**
@@ -47,6 +48,10 @@ Your documents stay plain Markdown and text. Everything My Doc adds, like tags a
 
 - Import files, whole folders or zip archives, by picker or drag and drop. Folder structure is kept, `.git` and `node_modules` are skipped, and name conflicts can be replaced, skipped or kept as copies.
 - Export a document as Markdown, standalone HTML, or PDF (through the browser's print dialog). Export a folder or the whole workspace as a zip.
+
+**Offline and install**
+
+- After the first visit the whole app loads without a network connection. It can be installed as an app (from the browser's install button or **Install My Doc as an app** in the command palette). When a new version is downloaded, a toast offers to reload.
 
 **Interface**
 

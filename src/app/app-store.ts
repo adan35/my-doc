@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import type { EntryId, WorkspaceInfo } from '@/domain/types';
 import type { WorkspaceProvider } from '@/storage/types';
 import { IndexedDbProvider } from '@/storage/indexeddb';
-import { Workspace } from './workspace';
+import { Workspace, setWriteGuard } from './workspace';
+import { ownership } from './ownership';
 import { WorkspaceSession } from './session';
 import { prefs } from './prefs';
 import { seedWorkspace } from './seed';
@@ -15,7 +16,8 @@ export interface RecentItem {
 }
 
 interface AppState {
-  phase: 'loading' | 'ready' | 'error';
+  /** `elsewhere`: another browser tab owns the data (see ownership.ts). */
+  phase: 'loading' | 'ready' | 'error' | 'elsewhere';
   error?: string;
   provider: WorkspaceProvider;
   workspaces: WorkspaceInfo[];
@@ -99,6 +101,11 @@ export const appActions = {
   async doInit() {
     try {
       set({ phase: 'loading', error: undefined });
+      if (!(await ownership.acquire())) {
+        set({ phase: 'elsewhere' });
+        return;
+      }
+      setWriteGuard(() => ownership.isOwner);
       const provider = get().provider;
       let workspaces = await provider.list();
       let fresh = false;
@@ -131,6 +138,20 @@ export const appActions = {
             : 'My Doc could not open its local storage. This can happen in private browsing or when site data is blocked.',
       });
     }
+  },
+
+  /** Called after this tab saved everything and is handing the data to another tab. */
+  relinquish() {
+    set({ phase: 'elsewhere' });
+  },
+
+  /** Takes the data back from the tab that owns it, then reloads from storage. */
+  async takeOver() {
+    set({ phase: 'loading' });
+    await ownership.takeOver();
+    get().session?.dispose();
+    set({ session: null });
+    await appActions.init();
   },
 
   async switchWorkspace(id: string) {
