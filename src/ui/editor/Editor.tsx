@@ -47,6 +47,7 @@ import { saveAttachment } from '@/app/attachments';
 import { toastError } from '@/app/toast-store';
 import { findFirstMatch as findFirst } from '@/app/search';
 import { markdownHighlight } from './highlight';
+import { slashCompletion } from './slash';
 import { insertCodeBlock, insertLink, insertText, toggleLinePrefix, toggleWrap } from './commands';
 
 export interface EditorHandle {
@@ -320,7 +321,10 @@ export function Editor({
         effects: langComp.current.reconfigure([
           label,
           markdown({ base: markdownLanguage, codeLanguages: languages, addKeymap: true }),
-          autocompletion({ override: [wikiAndTagCompletion(docId)], icons: false }),
+          autocompletion({
+            override: [wikiAndTagCompletion(docId), slashCompletion],
+            icons: false,
+          }),
           dedupeListMarker,
           placeholder('Start writing…'),
         ]),

@@ -8,6 +8,7 @@ import { FileIcon } from '../components/FileIcon';
 import { useTree } from '../hooks';
 import { HistoryDialog } from './HistoryDialog';
 import { ShortcutsDialog } from './ShortcutsDialog';
+import { TableDialog } from './TableDialog';
 
 export function DialogHost() {
   const stack = useDialogs((s) => s.stack);
@@ -36,6 +37,8 @@ function DialogFor({ req }: { req: DialogRequest }) {
       return <HistoryDialog entryId={req.entryId} onClose={() => req.resolve()} />;
     case 'shortcuts':
       return <ShortcutsDialog onClose={() => req.resolve()} />;
+    case 'table':
+      return <TableDialog initial={req.table} isNew={req.isNew} onClose={req.resolve} />;
   }
 }
 

@@ -306,10 +306,10 @@ export function getCommands(): Command[] {
         ? [
             {
               id: 'insert-table',
-              title: 'Insert table',
+              title: 'Insert or edit table',
               group: 'Document' as const,
               icon: <Table />,
-              keywords: 'grid columns rows',
+              keywords: 'grid columns rows visual editor',
               run: () => sendDocCommand('insert-table'),
             },
           ]
