@@ -67,3 +67,51 @@ test('visual table editor inserts and edits valid Markdown tables', async ({ pag
   await expect(page.locator('.prose table th')).toHaveCount(4);
   await expect(page.locator('.prose table td').first()).toHaveText('Ada | Lovelace');
 });
+
+test('pinned tabs stay first and survive closing other tabs', async ({ page }) => {
+  await freshApp(page);
+  await page.getByRole('treeitem', { name: 'Guides' }).click();
+  await page.getByRole('treeitem', { name: 'Markdown guide.md' }).click();
+  await page.getByRole('treeitem', { name: 'Keyboard shortcuts.md' }).click();
+  const tabs = page.getByRole('tablist', { name: 'Open documents' }).getByRole('tab');
+  await expect(tabs).toHaveCount(3);
+
+  await tabs.filter({ hasText: 'Keyboard shortcuts.md' }).click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Pin tab' }).click();
+  await expect(tabs.first()).toContainText('Keyboard shortcuts.md');
+
+  await tabs.filter({ hasText: 'Welcome to My Doc.md' }).click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Close others' }).click();
+  await expect(tabs).toHaveCount(2);
+  await expect(tabs.first()).toContainText('Keyboard shortcuts.md');
+
+  // Pins are part of the restored session.
+  await page.reload();
+  await expect(tabs).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Unpin Keyboard shortcuts.md' })).toBeVisible();
+
+  // Ctrl/Cmd+Shift+P opens the command palette too.
+  await page.locator('body').press(`${mod}+Shift+P`);
+  await expect(page.getByRole('dialog', { name: 'Command palette' })).toBeVisible();
+});
+
+test('search understands phrases, tags, folders and exclusions', async ({ page }) => {
+  await freshApp(page);
+  await page.keyboard.press(`${mod}+Shift+F`);
+  const box = page.getByRole('searchbox', { name: 'Search everything' });
+  const results = page.locator('main ul button');
+  await box.fill('shortcut folder:guides');
+  await expect(results).toHaveCount(1);
+  await expect(results.first()).toContainText('Keyboard shortcuts.md');
+  await box.fill('tag:welcome');
+  await expect(results).toHaveCount(1);
+  await expect(results.first()).toContainText('Welcome to My Doc.md');
+  await box.fill('"command palette"');
+  await expect(results).toHaveCount(2);
+  // The welcome guide links to "Guides/Markdown guide.md", so excluding "guides" drops it.
+  await box.fill('"command palette" -guides');
+  await expect(results).toHaveCount(1);
+  await expect(results.first()).toContainText('Keyboard shortcuts.md');
+  await box.fill('zzzz nothing');
+  await expect(page.getByRole('button', { name: 'Open by name instead' })).toBeVisible();
+});

@@ -30,10 +30,12 @@ import {
   Copy,
   Tag,
   Table,
+  Pin,
+  X,
 } from 'lucide-react';
 import * as A from '@/app/actions';
 import { ws } from '@/app/app-store';
-import { useEditor } from '@/app/editor-store';
+import { editorActions, useEditor } from '@/app/editor-store';
 import { navigate, useRouter } from '@/app/router';
 import { useSettings } from '@/app/settings-store';
 import { useUi } from '@/app/ui-store';
@@ -286,6 +288,28 @@ export function getCommands(): Command[] {
         group: 'Document',
         icon: <Copy />,
         run: () => void A.duplicateEntry(doc.id),
+      },
+      {
+        id: 'pin-tab',
+        title: useEditor.getState().pinned.includes(doc.id) ? 'Unpin tab' : 'Pin tab',
+        group: 'Document',
+        icon: <Pin />,
+        keywords: 'keep tab',
+        run: () => useEditor.getState().tabs.includes(doc.id) && editorActions.togglePin(doc.id),
+      },
+      {
+        id: 'close-others',
+        title: 'Close other tabs',
+        group: 'Document',
+        icon: <X />,
+        run: () => void editorActions.closeOthers(doc.id),
+      },
+      {
+        id: 'close-right',
+        title: 'Close tabs to the right',
+        group: 'Document',
+        icon: <X />,
+        run: () => void editorActions.closeToRight(doc.id),
       },
       {
         id: 'favorite',

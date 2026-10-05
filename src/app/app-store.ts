@@ -27,6 +27,8 @@ interface AppState {
   /** Bumps whenever derived indexes (search, tags, links) change. */
   indexVersion: number;
   recents: RecentItem[];
+  /** How often each document was opened, for ranking quick open. */
+  openCounts: Record<EntryId, number>;
   expanded: Record<EntryId, true>;
   persistentStorage: boolean | null;
 }
@@ -35,6 +37,8 @@ const RECENTS_LIMIT = 30;
 let initPromise: Promise<void> | null = null;
 const LAST_WS_KEY = 'mydoc:last-workspace';
 const recentsKey = (ws: string) => `mydoc:recents:${ws}`;
+const frequencyKey = (ws: string) => `mydoc:open-counts:${ws}`;
+const FREQUENCY_LIMIT = 500;
 const expandedKey = (ws: string) => `mydoc:expanded:${ws}`;
 
 export const useApp = create<AppState>(() => ({
@@ -45,6 +49,7 @@ export const useApp = create<AppState>(() => ({
   treeVersion: 0,
   indexVersion: 0,
   recents: [],
+  openCounts: {},
   expanded: {},
   persistentStorage: null,
 }));
@@ -79,6 +84,7 @@ async function openSession(info: WorkspaceInfo) {
     session: next,
     treeVersion: get().treeVersion + 1,
     recents: prefs.get<RecentItem[]>(recentsKey(info.id), []),
+    openCounts: prefs.get<Record<EntryId, number>>(frequencyKey(info.id), {}),
     expanded: prefs.get<Record<EntryId, true>>(expandedKey(info.id), {}),
   });
   return next;
@@ -188,6 +194,7 @@ export const appActions = {
     }
     await provider.remove(id);
     prefs.remove(recentsKey(id));
+    prefs.remove(frequencyKey(id));
     prefs.remove(expandedKey(id));
     let workspaces = await provider.list();
     if (!workspaces.length) {
@@ -205,8 +212,16 @@ export const appActions = {
       0,
       RECENTS_LIMIT,
     );
-    set({ recents });
+    const counts = { ...get().openCounts, [id]: (get().openCounts[id] ?? 0) + 1 };
+    // Keep the map bounded: drop the least-opened documents.
+    const entries = Object.entries(counts);
+    const openCounts =
+      entries.length > FREQUENCY_LIMIT
+        ? Object.fromEntries(entries.sort((a, b) => b[1] - a[1]).slice(0, FREQUENCY_LIMIT))
+        : counts;
+    set({ recents, openCounts });
     prefs.set(recentsKey(s.workspace.id), recents);
+    prefs.set(frequencyKey(s.workspace.id), openCounts);
   },
 
   setExpanded(id: EntryId, open: boolean) {

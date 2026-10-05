@@ -32,7 +32,7 @@ export function useGlobalShortcuts() {
         e.stopPropagation();
         fn();
       };
-      if (m(SHORTCUTS.palette))
+      if (m(SHORTCUTS.palette) || m(SHORTCUTS.paletteAlt))
         return run(() => ui.setOverlay(ui.overlay === 'palette' ? null : 'palette'));
       if (m(SHORTCUTS.quickOpen))
         return run(() => ui.setOverlay(ui.overlay === 'quickopen' ? null : 'quickopen'));
