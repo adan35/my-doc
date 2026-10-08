@@ -147,13 +147,24 @@ const dedupeListMarker = EditorView.inputHandler.of((view, from, to, text) => {
   return true;
 });
 
-/** Fonts come from CSS variables set by the document view (themes beat CodeMirror's base styles). */
+/**
+ * Fonts and gutter colors come from CSS variables set by the app theme and document view.
+ * They live in an editor theme because CodeMirror's base theme assumes a light editor
+ * (light grey gutters) and outranks plain stylesheet rules.
+ */
 const fontTheme = EditorView.theme({
   '.cm-scroller': {
     fontFamily: 'var(--editor-font, var(--font-mono))',
     lineHeight: 'var(--editor-line-height, 1.7)',
   },
   '.cm-content': { fontVariantLigatures: 'none' },
+  '.cm-gutters': {
+    backgroundColor: 'var(--canvas)',
+    color: 'var(--stone)',
+    border: 'none',
+  },
+  '.cm-activeLineGutter': { backgroundColor: 'transparent', color: 'var(--ink)' },
+  '.cm-activeLine': { backgroundColor: 'color-mix(in srgb, var(--hover) 60%, transparent)' },
 });
 
 /** Typewriter scrolling: the line being edited stays near the middle of the screen. */

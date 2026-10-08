@@ -33,3 +33,15 @@ export async function newDocInRoot(page: Page, name: string) {
   await page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('button').last().click();
   await prompt(page, name);
 }
+
+/**
+ * Hides the File System Access API so imports use the plain file input, as in Firefox
+ * and Safari (and so Playwright's file chooser can answer the picker).
+ */
+export async function withoutFileSystemAccess(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as Record<string, unknown>;
+    delete w.showOpenFilePicker;
+    delete w.showDirectoryPicker;
+  });
+}

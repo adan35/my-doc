@@ -4,13 +4,27 @@ import { useEditor } from '@/app/editor-store';
 import { useUi } from '@/app/ui-store';
 import { openMenuAt } from '../components/Menu';
 import * as A from '@/app/actions';
-import { Clock, Star, Hash, Trash2, Settings, FilePlus2, FolderPlus, Upload } from 'lucide-react';
+import {
+  Clock,
+  Star,
+  Hash,
+  Trash2,
+  Settings,
+  FilePlus2,
+  FolderPlus,
+  Upload,
+  Moon,
+  Sun,
+} from 'lucide-react';
+import { useResolvedTheme } from '../hooks';
+import { toggleTheme } from '../components/ThemeToggle';
 import { importSubmenu } from '../entry-menu';
 
 /** Phone navigation: Documents, Search, the open document, and More. */
 export function MobileNav() {
   const route = useRouter((s) => s.route);
   const activeId = useEditor((s) => s.activeId);
+  const theme = useResolvedTheme();
   const items = [
     {
       label: 'Home',
@@ -77,6 +91,12 @@ export function MobileNav() {
               },
               { label: 'Tags', icon: <Hash />, onSelect: () => navigate({ name: 'tags' }) },
               { label: 'Trash', icon: <Trash2 />, onSelect: () => navigate({ name: 'trash' }) },
+              'separator',
+              {
+                label: theme === 'dark' ? 'Light theme' : 'Dark theme',
+                icon: theme === 'dark' ? <Sun /> : <Moon />,
+                onSelect: () => toggleTheme(theme),
+              },
               {
                 label: 'Settings',
                 icon: <Settings />,
