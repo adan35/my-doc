@@ -31,6 +31,7 @@ import { FileIcon } from '../components/FileIcon';
 import { formatShortcut, useTree } from '../hooks';
 import { importSubmenu } from '../entry-menu';
 import { FileTree } from './FileTree';
+import { ThemeToggle } from '../components/ThemeToggle';
 
 export function Sidebar({ onClose, drawer }: { onClose?: () => void; drawer?: boolean }) {
   const tree = useTree()!;
@@ -45,6 +46,7 @@ export function Sidebar({ onClose, drawer }: { onClose?: () => void; drawer?: bo
     <nav aria-label="Workspace" className="flex h-full min-h-0 flex-col bg-sidebar text-charcoal">
       <div className="flex items-center gap-1 px-2 pt-2 pb-1">
         <WorkspaceSwitcher />
+        <ThemeToggle />
         {drawer ? (
           <button type="button" className="icon-btn" aria-label="Close sidebar" onClick={onClose}>
             <X size={16} />

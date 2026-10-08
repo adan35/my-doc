@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { strToU8, zipSync } from 'fflate';
-import { freshApp } from './helpers';
+import { freshApp, withoutFileSystemAccess } from './helpers';
+
+test.beforeEach(({ page }) => withoutFileSystemAccess(page));
 
 test('imports a zipped documentation folder preserving structure', async ({ page }) => {
   await freshApp(page);

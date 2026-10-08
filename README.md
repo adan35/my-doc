@@ -55,6 +55,8 @@ Your documents stay plain Markdown and text. Everything My Doc adds, like tags a
 **Import and export**
 
 - Import files, whole folders or zip archives, by picker or drag and drop. Folder structure is kept, `.git` and `node_modules` are skipped, and name conflicts can be replaced, skipped or kept as copies.
+- In Chrome and Edge, text files imported with the Files… or Folder… picker stay linked to the original file: every save is also written back to it (the browser asks once for permission). Other browsers keep the edited copy in My Doc; export it to save it back.
+- Any text file opens in the editor, including dotfiles and unfamiliar extensions.
 - Export a document as Markdown, plain text, standalone HTML, or PDF (through the browser's print dialog). Export a folder or the whole workspace as a zip.
 
 **Offline and install**
@@ -65,7 +67,7 @@ Your documents stay plain Markdown and text. Everything My Doc adds, like tags a
 
 - Tabs with pinning, drag reordering, close others / to the right, reopen closed tab, and session restore.
 - A layout for each screen size: a bottom navigation bar on phones, a drawer on tablets, and resizable side panels on desktop.
-- Light, dark and system themes; comfortable or compact density; adjustable font size and reading width.
+- Light, dark and system themes, with a one-click toggle in the sidebar; comfortable or compact density; adjustable font size and reading width.
 - Keyboard shortcuts for everything (open **Keyboard shortcuts** from the command palette for the full list).
 
 ## Where your data lives
@@ -95,4 +97,4 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for tests and tooling, and [docs/
 
 ## Not yet built
 
-These are planned and are not in the app today: editing real folders on disk (File System Access API or a desktop shell), cloud storage and sync, accounts, sharing, comments and collaboration, a Typora-style live preview editing mode, two different documents side by side, configurable shortcuts, and AI features.
+These are planned and are not in the app today: opening a folder on disk as a live workspace (new files and changes made outside My Doc), cloud storage and sync, accounts, sharing, comments and collaboration, a Typora-style live preview editing mode, two different documents side by side, configurable shortcuts, and AI features.

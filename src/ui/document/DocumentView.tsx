@@ -22,7 +22,7 @@ import {
   FileQuestion,
 } from 'lucide-react';
 import type { Entry, EntryId } from '@/domain/types';
-import { fileTypeOf, isMarkdownName, isTextType } from '@/domain/names';
+import { isMarkdownName } from '@/domain/names';
 import { extractHeadings } from '@/domain/outline';
 import { toggleTaskAt } from '@/domain/tasks';
 import { findFirstMatch } from '@/app/search';
@@ -43,7 +43,7 @@ import { exportSubmenu } from '../entry-menu';
 import { sendDocCommand } from '../doc-commands';
 import { Preview, type PreviewHandle } from './Preview';
 import { RightPanel, Outline } from './RightPanel';
-import { SaveStatus } from './SaveStatus';
+import { DiskStatus, SaveStatus } from './SaveStatus';
 import { BinaryView } from './BinaryView';
 
 export function DocumentView({ id, anchor }: { id: EntryId; anchor?: string }) {
@@ -63,7 +63,7 @@ export function DocumentView({ id, anchor }: { id: EntryId; anchor?: string }) {
     navigate({ name: 'folder', id }, { replace: true });
     return null;
   }
-  const textual = ws().isTextEntry(entry) && isTextType(fileTypeOf(entry.name));
+  const textual = ws().isEditable(entry);
   return textual ? (
     <TextDocument entry={entry} anchor={anchor} />
   ) : (
@@ -374,7 +374,7 @@ function DocHeader({
   const readingMode = useUi((s) => s.readingMode);
   const panelOpen = useUi((s) => s.rightPanelOpen);
   const isMd = isMarkdownName(entry.name);
-  const textual = ws().isTextEntry(entry) && isTextType(fileTypeOf(entry.name));
+  const textual = ws().isEditable(entry);
   const ancestors = tree.ancestors(entry.id);
 
   const menu: MenuEntry[] = [
@@ -436,6 +436,7 @@ function DocHeader({
     return (
       <div className="flex h-11 shrink-0 items-center justify-end gap-2 px-3 no-print">
         <SaveStatus id={entry.id} />
+        <DiskStatus id={entry.id} />
         <button
           type="button"
           className="btn btn-ghost h-8 text-steel"
@@ -492,6 +493,7 @@ function DocHeader({
         </button>
       </nav>
       {textual && <SaveStatus id={entry.id} />}
+      {textual && <DiskStatus id={entry.id} />}
       {isMd && !readingMode && (
         <div
           role="group"
